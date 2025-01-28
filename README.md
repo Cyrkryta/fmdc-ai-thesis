@@ -8,10 +8,7 @@
 Estimate and evaluate undistorted fMRI scans from a distorted scan and T1-weighted scan.
 
 #### Description
-The project aims to use a ```U-NET``` deep learning model for ```estimateing fieldmaps``` used for ```fMRI distortion correction```
-It is a part of the ```final thesis``` for the IT & Cognition Master's program at the ```University of Copenhagen```
-The carrying out of the thesis is done in collaboration with the ```Neurobiology Research Unit (NRU)``` located at Rigshospitalet, Copenhagen
-The thesis builds upon the work done by ```Jan Tagscherer```, a previous master's student affiliated with the ```NRU```
+The project aims to use a ```U-NET``` deep learning model for ```estimateing fieldmaps``` used for ```fMRI distortion correction```. It is a part of the ```final thesis``` for the IT & Cognition Master's program at the ```University of Copenhagen```, and is carried out in collaboration with the ```Neurobiology Research Unit (NRU)``` located at Rigshospitalet, Copenhagen. The thesis builds upon the work done by ```Jan Tagscherer```, a previous master's student affiliated with the ```NRU```.
 
 <!--
 <div align="center">    
