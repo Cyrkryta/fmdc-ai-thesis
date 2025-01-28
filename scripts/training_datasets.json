@@ -1,0 +1,50 @@
+{
+  "ds000224": {
+    "echoSpacing": 0.000590001,
+    "paths": {
+      "anatomical": "{subject_path}/ses-struct01/anat/{subject}_ses-struct01_run-01_T1w.nii.gz",
+      "fmap": {
+        "magnitude": "{subject_path}/ses-func01/fmap/{subject}_ses-func01_magnitude1.nii.gz",
+        "phasediff": "{subject_path}/ses-func01/fmap/{subject}_ses-func01_phasediff.nii.gz"
+      },
+      "functional": "{subject_path}/ses-func01/func/{subject}_ses-func01_task-rest_bold.nii.gz"
+    },
+    "excludedSubjects": []
+  },
+  "ds001454": {
+    "echoSpacing": 0.000330003,
+    "paths": {
+      "anatomical": "{subject_path}/ses-1/anat/{subject}_ses-1_T1w.nii.gz",
+      "fmap": {
+        "magnitude": "{subject_path}/ses-1/fmap/{subject}_ses-1_magnitude1.nii.gz",
+        "phasediff": "{subject_path}/ses-1/fmap/{subject}_ses-1_phasediff.nii.gz"
+      },
+      "functional": "{subject_path}/ses-1/func/{subject}_ses-1_task-rest_run-01_bold.nii.gz"
+    },
+    "excludedSubjects": []
+  },
+  "ds002799": {
+    "echoSpacing": 0.000559996,
+    "paths": {
+      "anatomical": "{subject_path}/ses-preop/anat/{subject}_ses-preop_T1w.nii",
+      "fmap": {
+        "magnitude": "{subject_path}/ses-preop/fmap/{subject}_ses-preop_run-01_magnitude1.nii",
+        "phasediff": "{subject_path}/ses-preop/fmap/{subject}_ses-preop_run-01_phasediff.nii"
+      },
+      "functional": "{subject_path}/ses-preop/func/{subject}_ses-preop_task-rest_run-01_bold.nii"
+    },
+    "excludedSubjects": ["sub-302", "sub-303", "sub-335", "sub-339", "sub-352", "sub-357", "sub-369", "sub-372", "sub-384", "sub-394", "sub-395", "sub-399", "sub-400", "sub-403", "sub-405", "sub-413", "sub-376"]
+  },
+  "ds004101": {
+    "echoSpacing": 0.000510004,
+    "paths": {
+      "anatomical": "{subject_path}/ses-1pre/anat/{subject}_ses-1pre_T1w.nii.gz",
+      "fmap": {
+        "magnitude": "{subject_path}/ses-2post/fmap/{subject}_ses-2post_magnitude1.nii.gz",
+        "phasediff": "{subject_path}/ses-2post/fmap/{subject}_ses-2post_phasediff.nii.gz"
+      },
+      "functional": "{subject_path}/ses-2post/func/{subject}_ses-2post_task-rest_bold.nii.gz"
+    },
+    "excludedSubjects": []
+  }
+}
