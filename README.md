@@ -1,5 +1,21 @@
 <div align="center">    
  
+# Field Map Distortion Correction Master's Thesis for IT & Cognition
+
+</div>
+
+## TL;DR
+Estimate and evaluate undistorted fMRI scans from a distorted scan and T1-weighted scan.
+
+#### Description
+The project aims to use a ```U-NET``` deep learning model for ```estimateing fieldmaps``` used for ```fMRI distortion correction```
+It is a part of the ```final thesis``` for the IT & Cognition Master's program at the ```University of Copenhagen```
+The carrying out of the thesis is done in collaboration with the ```Neurobiology Research Unit (NRU)``` located at Rigshospitalet, Copenhagen
+The thesis builds upon the work done by ```Jan Tagscherer```, a previous master's student affiliated with the ```NRU```
+
+<!--
+<div align="center">    
+ 
 # Field Map AI
 
 </div>
@@ -49,3 +65,4 @@ There are multiple open tasks that require further exploration:
 - [ ] For the temporal correlation metric, do a z-transform of the r-values and do voxel-wise t-tests
 - [ ] Also show best/worst subjects as examples rather than random ones
 - [ ] Add a scatterplot similar to figure 5.7, but for each model/baseline scatterplot the performance on all subjects allowing for inspection of their distribution shape, potentially alos add a convex function that fits an ellipsoid
+-->
