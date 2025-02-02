@@ -10,29 +10,5 @@
       "functional": "{subject_path}/ses-func01/func/{subject}_ses-func01_task-rest_bold.nii.gz"
     },
     "excludedSubjects": []
-  },
-  "ds001454": {
-    "echoSpacing": 0.000330003,
-    "paths": {
-      "anatomical": "{subject_path}/ses-1/anat/{subject}_ses-1_T1w.nii.gz",
-      "fmap": {
-        "magnitude": "{subject_path}/ses-1/fmap/{subject}_ses-1_magnitude1.nii.gz",
-        "phasediff": "{subject_path}/ses-1/fmap/{subject}_ses-1_phasediff.nii.gz"
-      },
-      "functional": "{subject_path}/ses-1/func/{subject}_ses-1_task-rest_run-01_bold.nii.gz"
-    },
-    "excludedSubjects": []
-  },
-  "ds004101": {
-    "echoSpacing": 0.000510004,
-    "paths": {
-      "anatomical": "{subject_path}/ses-1pre/anat/{subject}_ses-1pre_T1w.nii.gz",
-      "fmap": {
-        "magnitude": "{subject_path}/ses-2post/fmap/{subject}_ses-2post_magnitude1.nii.gz",
-        "phasediff": "{subject_path}/ses-2post/fmap/{subject}_ses-2post_phasediff.nii.gz"
-      },
-      "functional": "{subject_path}/ses-2post/func/{subject}_ses-2post_task-rest_bold.nii.gz"
-    },
-    "excludedSubjects": []
   }
 }
