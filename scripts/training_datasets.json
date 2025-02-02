@@ -23,18 +23,6 @@
     },
     "excludedSubjects": []
   },
-  "ds002799": {
-    "echoSpacing": 0.000559996,
-    "paths": {
-      "anatomical": "{subject_path}/ses-preop/anat/{subject}_ses-preop_T1w.nii",
-      "fmap": {
-        "magnitude": "{subject_path}/ses-preop/fmap/{subject}_ses-preop_run-01_magnitude1.nii",
-        "phasediff": "{subject_path}/ses-preop/fmap/{subject}_ses-preop_run-01_phasediff.nii"
-      },
-      "functional": "{subject_path}/ses-preop/func/{subject}_ses-preop_task-rest_run-01_bold.nii"
-    },
-    "excludedSubjects": ["sub-302", "sub-303", "sub-335", "sub-339", "sub-352", "sub-357", "sub-369", "sub-372", "sub-384", "sub-394", "sub-395", "sub-399", "sub-400", "sub-403", "sub-405", "sub-413", "sub-376"]
-  },
   "ds004101": {
     "echoSpacing": 0.000510004,
     "paths": {

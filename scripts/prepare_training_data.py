@@ -177,7 +177,7 @@ if __name__ == '__main__':
     directly used for training and inferring distortion correction models.
     """
 
-    fsl_dir = '/Users/jan/Applications/fsl'
-    dataset_root = '/Users/jan/Downloads/openneuro-datasets'
-    output_root = '/Users/jan/Downloads/openneuro-datasets/preprocessed'
+    fsl_dir = '/home/mlc/fsl'
+    dataset_root = '/home/mlc/dev/fmdc/downloads/openneuro-datasets'
+    output_root = '/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed'
     _convert_all_datasets(dataset_root=dataset_root, output_root=output_root, fsl_dir=fsl_dir)
