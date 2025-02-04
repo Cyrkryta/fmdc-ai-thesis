@@ -90,8 +90,10 @@ def _evaluate_temporal_correlation(model, dataloader):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--training_dataset_path', default='/Users/jan/Downloads/openneuro-datasets/preprocessed/ds*/')
-    parser.add_argument('--checkpoint_path', default='/Users/jan/Downloads/fmri-ckpts')
+    # parser.add_argument('--training_dataset_path', default='/Users/jan/Downloads/openneuro-datasets/preprocessed/ds*/')
+    parser.add_argument('--training_dataset_path', default='/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds*/') # My new and own path
+    # parser.add_argument('--checkpoint_path', default='/Users/jan/Downloads/fmri-ckpts')
+    parser.add_argument('--checkpoint_path', default='/home/mlc/dev/fmdc/downloads/fmri-checkpoints/')
     parser.add_argument('--max_epochs', type=int, default=3)
     parser.add_argument('--batch_size', type=int, default=32)
     args = parser.parse_args()
@@ -106,10 +108,16 @@ if __name__ == '__main__':
     data_module = FMRIDataModule(dataset_paths=glob.glob(args.training_dataset_path), batch_size=args.batch_size, device=device)
     unet3d = UNet3DFieldmap()
 
-    wandb.init(project='field-map-ai')
-    wandb_logger = WandbLogger(project='field-map-ai')
+    # wandb.init(project='field-map-ai')
+    # wandb_logger = WandbLogger(project='field-map-ai')
 
-    val_every_n_epochs = 100
+    # Setting up weights and biases for training
+    wandb.init(project='fmdc')
+    wandb_logger = WandbLogger(project='fmdc')
+
+    # Defining validation times
+    # val_every_n_epochs = 100
+    val_every_n_epochs = 3 # Validation times lowered for testing purposes
 
     checkpoint_prefix = f"{wandb.run.id}_"
     checkpoint_callback = ModelCheckpoint(
@@ -117,7 +125,8 @@ if __name__ == '__main__':
         filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}",
         every_n_epochs=val_every_n_epochs,
         save_top_k=1,
-        monitor='val_loss'
+        monitor='val_loss',
+        save_last=True # For testing purposes
     )
 
     # This early stopping configuration is only valid for the fieldmap model variant
@@ -125,7 +134,7 @@ if __name__ == '__main__':
 
     trainer = L.Trainer(
         max_epochs=args.max_epochs,
-        log_every_n_steps=100,
+        log_every_n_steps=3, # Low logging for testing
         callbacks=[checkpoint_callback, early_stop_callback],
         default_root_dir=args.checkpoint_path,
         check_val_every_n_epoch=val_every_n_epochs,
