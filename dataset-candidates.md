@@ -37,3 +37,11 @@
 |28andHe                                                                                                                  |ds005115|Magnitude-Phasediff        |Yes                                     |Siemens|1       |https://openneuro.org/datasets/ds005115/versions/1.1.0|
 |Parallel systems for social and spatial reasoning                                                                        |ds003814|PA-AP                      |Yes                                     |Siemens|10      |https://openneuro.org/datasets/ds003814/versions/1.0.0|
 |Priority                                                                                                                 |ds005464|PA-AP                      |Yes                                     |Siemens|29      |https://openneuro.org/datasets/ds005464/versions/1.0.0|
+
+NEWLY FOUND DATASETS
+|Title                                                                                                                    |ID      |fmap                       |Healthy?                                |Scanner|Subjects|Link                                                  |
+|-------------------------------------------------------------------------------------------------------------------------|--------|---------------------------|----------------------------------------|-------|--------|------------------------------------------------------|
+|An fMRI dataset for whole-body somatotopic mapping in humans                                                                                              |ds004044|Magnitude-Phasediff        |Yes                                     |Siemens|68     |https://openneuro.org/datasets/ds004044/versions/2.0.3|
+|changepoint fmri                                                                                              |ds003170|Magnitude-Phasediff        |Assuming yes                                     |Siemens|16     |https://openneuro.org/datasets/ds003170/versions/2.0.0|
+
+
