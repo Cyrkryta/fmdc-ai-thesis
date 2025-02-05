@@ -9,7 +9,7 @@ def _plot_model_graph(model, name):
     graph = model_graph.visual_graph
 
     graph_pdf = graph.pipe(format='pdf')
-    with open(f'/Users/jan/Downloads/model-graph-{name}.pdf', 'wb') as f:
+    with open(f'/home/mlc/dev/fmdc/downloads/model-graph-{name}.pdf', 'wb') as f:
         f.write(graph_pdf)
 
 
