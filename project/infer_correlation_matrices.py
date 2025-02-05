@@ -60,7 +60,8 @@ def warp_to_mni(input_volume, affine_input_volume, subject_path):
         in_premat = Node(SelectFiles({"out_file": abspath(os.path.join(subject_path, 'func2struct.mat'))}), name="in_premat")
         out_volume = Node(nio.ExportFile(out_file=abspath(os.path.join(directory, "output.nii.gz")), clobber=True), name="out_volume")
 
-        ref = "/Users/jan/Applications/fsl/data/standard/MNI152_T1_2mm_brain.nii.gz"
+        ref = "/home/mlc/fsl/data/standard/MNI152_T1_2mm_brain.nii.gz"
+        # ref = "/Users/jan/Applications/fsl/data/standard/MNI152_T1_2mm_brain.nii.gz"
 
         apply_warp = Node(fsl.preprocess.ApplyWarp(ref_file=ref), name="apply_warp")
 
@@ -82,7 +83,7 @@ def warp_to_mni(input_volume, affine_input_volume, subject_path):
 
 def _debug_save_nifti(volume, affine, name):
     img = nib.Nifti1Image(volume, affine)
-    nib.save(img, os.path.join('/Users/jan/Downloads/correlation-matrices/nifti', f'{name}.nii.gz'))
+    nib.save(img, os.path.join('/home/mlc/dev/fmdc/downloads/correlation-matrices/nifti', f'{name}.nii.gz'))
 
 
 def load_input_samples(subject_path):
@@ -161,15 +162,15 @@ if __name__ == '__main__':
     stored as both Numpy files as well as VTI files to be visualized in Paraview.
     """
 
-    subject_paths = get_subject_paths('/Users/jan/Downloads/openneuro-datasets/preprocessed/ds*/')
-    output_path = '/Users/jan/Downloads/correlation-matrices/v2/'
-
+    subject_paths = get_subject_paths('/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds*/')
+    output_path = '/home/mlc/dev/fmdc/downloads/correlation-matrices/v2/'
+    fieldmap_ckpt_path = '/home/mlc/dev/fmdc/downloads/fmri-checkpoints/last.ckpt'
     device = 'cpu'
 
-    direct_model = UNet3DDirect.load_from_checkpoint('/Users/jan/Downloads/unet3d2_epoch=18_val_loss=0.13242.ckpt', map_location=torch.device(device), encoder_map_location=torch.device(device), device=device)
-    direct_model.to(device)
-    direct_model.eval()
-    fieldmap_model = UNet3DFieldmap.load_from_checkpoint('/Users/jan/Downloads/ruby-sunset-unet3d2_epoch=4799_val_loss=2670.47461.ckpt', map_location=torch.device(device), encoder_map_location=torch.device(device), device=device)
+    # direct_model = UNet3DDirect.load_from_checkpoint('/Users/jan/Downloads/unet3d2_epoch=18_val_loss=0.13242.ckpt', map_location=torch.device(device), encoder_map_location=torch.device(device), device=device)
+    # direct_model.to(device)
+    # direct_model.eval()
+    fieldmap_model = UNet3DFieldmap.load_from_checkpoint(fieldmap_ckpt_path, map_location=torch.device(device), encoder_map_location=torch.device(device), device=device)
     fieldmap_model.to(device)
     fieldmap_model.eval()
 
@@ -178,23 +179,23 @@ if __name__ == '__main__':
         if os.path.isdir(subject_output_path):
             continue
 
-        temporal_correlation_out_direct = TemporalCorrelation()
+        # temporal_correlation_out_direct = TemporalCorrelation()
         temporal_correlation_out_fieldmap = TemporalCorrelation()
         temporal_correlation_distorted = TemporalCorrelation()
 
-        correlations_direct_out = []
-        correlations_direct_distorted = []
-        correlations_direct_delta = []
+        # correlations_direct_out = []
+        # correlations_direct_distorted = []
+        # correlations_direct_delta = []
         correlations_fieldmap_out = []
         correlations_fieldmap_distorted = []
         correlations_fieldmap_delta = []
 
         for sample in load_input_samples(subject_path):
-            direct_out = _undistort_direct(direct_model, sample, device)
-            temporal_correlation_out_direct.update(
-                ground_truth=sample['b0u'].squeeze(),
-                image=np.where(sample['mask'], direct_out, -1).squeeze()
-            )
+            # direct_out = _undistort_direct(direct_model, sample, device)
+            # temporal_correlation_out_direct.update(
+            #     ground_truth=sample['b0u'].squeeze(),
+            #     image=np.where(sample['mask'], direct_out, -1).squeeze()
+            # )
 
             fieldmap_out = _undistort_fieldmap(fieldmap_model, sample, device)
             temporal_correlation_out_fieldmap.update(
@@ -207,29 +208,29 @@ if __name__ == '__main__':
                 image=sample['b0d']
             )
 
-        pearson_coefficients_out_direct, _ = temporal_correlation_out_direct.compute()
+        # pearson_coefficients_out_direct, _ = temporal_correlation_out_direct.compute()
         pearson_coefficients_out_fieldmap, _ = temporal_correlation_out_fieldmap.compute()
         pearson_coefficients_distorted, _ = temporal_correlation_distorted.compute()
 
         if not os.path.exists(subject_output_path):
             os.makedirs(subject_output_path)
 
-        with open(f'{subject_output_path}/pearson_coefficients_out_direct.npy', 'wb+') as f:
-            np.save(f, pearson_coefficients_out_direct)
+        # with open(f'{subject_output_path}/pearson_coefficients_out_direct.npy', 'wb+') as f:
+        #     np.save(f, pearson_coefficients_out_direct)
         with open(f'{subject_output_path}/pearson_coefficients_out_fieldmap.npy', 'wb+') as f:
             np.save(f, pearson_coefficients_out_fieldmap)
         with open(f'{subject_output_path}/pearson_coefficients_distorted.npy', 'wb+') as f:
             np.save(f, pearson_coefficients_distorted)
-        with open(f'{subject_output_path}/pearson_coefficients_delta_direct.npy', 'wb+') as f:
-            np.save(f, pearson_coefficients_distorted - pearson_coefficients_out_direct)
+        # with open(f'{subject_output_path}/pearson_coefficients_delta_direct.npy', 'wb+') as f:
+        #     np.save(f, pearson_coefficients_distorted - pearson_coefficients_out_direct)
         with open(f'{subject_output_path}/pearson_coefficients_delta_fieldmap.npy', 'wb+') as f:
             np.save(f, pearson_coefficients_distorted - pearson_coefficients_out_fieldmap)
 
     aggregates = {
         "pearson_coefficients_distorted": [],
-        "pearson_coefficients_out_direct": [],
+        # "pearson_coefficients_out_direct": [],
         "pearson_coefficients_out_fieldmap": [],
-        "pearson_coefficients_delta_direct": [],
+        # "pearson_coefficients_delta_direct": [],
         "pearson_coefficients_delta_fieldmap": []
     }
 

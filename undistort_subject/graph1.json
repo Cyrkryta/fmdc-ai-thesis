@@ -1,0 +1,58 @@
+{
+    "groups": [
+        {
+            "name": "Group_00001",
+            "procs": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "total": 4
+        }
+    ],
+    "links": [
+        {
+            "source": 0,
+            "target": 2,
+            "value": 1
+        },
+        {
+            "source": 1,
+            "target": 2,
+            "value": 1
+        },
+        {
+            "source": 2,
+            "target": 3,
+            "value": 1
+        }
+    ],
+    "maxN": 4,
+    "nodes": [
+        {
+            "group": 1,
+            "name": "0_in_b0d",
+            "report": "/tmp/tmp4c73sy_k/undistort_subject/in_b0d/_report/report.rst",
+            "result": "/tmp/tmp4c73sy_k/undistort_subject/in_b0d/result_in_b0d.pklz"
+        },
+        {
+            "group": 1,
+            "name": "1_in_fieldmap",
+            "report": "/tmp/tmptec69xze/undistort_subject/in_fieldmap/_report/report.rst",
+            "result": "/tmp/tmptec69xze/undistort_subject/in_fieldmap/result_in_fieldmap.pklz"
+        },
+        {
+            "group": 1,
+            "name": "2_fugue_correction",
+            "report": "/tmp/tmpv3c3iozg/undistort_subject/fugue_correction/_report/report.rst",
+            "result": "/tmp/tmpv3c3iozg/undistort_subject/fugue_correction/result_fugue_correction.pklz"
+        },
+        {
+            "group": 1,
+            "name": "3_out_b0_u",
+            "report": "/tmp/tmpwkif5gjm/undistort_subject/out_b0_u/_report/report.rst",
+            "result": "/tmp/tmpwkif5gjm/undistort_subject/out_b0_u/result_out_b0_u.pklz"
+        }
+    ]
+}

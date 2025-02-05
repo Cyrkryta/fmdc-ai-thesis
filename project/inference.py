@@ -1,4 +1,5 @@
 import os.path
+import fnmatch
 
 import nibabel as nib
 import numpy as np
@@ -6,6 +7,13 @@ import torch
 
 from data import fmri_data_util
 from models.unet3d_fieldmap import UNet3DFieldmap
+
+def find_subject_directories(root_dir, dir_name):
+    matching_dirs = []
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        for dirname in fnmatch.filter(dirnames, dir_name):
+            matching_dirs.append(os.path.join(dirpath, dirname))
+    return matching_dirs
 
 
 def _torch_to_nii(img):
@@ -81,11 +89,34 @@ def infer_and_store(input_subject_path, checkpoint_path, output_path, device):
         output_path=output_path
     )
 
-
 if __name__ == '__main__':
+    subject_root_dir = '/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds000224/'
+    search_dir = "sub-*"
+    matching_dirs = find_subject_directories(subject_root_dir, search_dir)
+    # for input_dir in matching_dirs:
+    #     infer_and_store(
+    #         input_subject_path=input_dir,
+    #         output_path='/home/mlc/dev/fmdc/downloads/fmri-checkpoints/inf-ckpt-trained',
+    #         checkpoint_path='/home/mlc/dev/fmdc/downloads/fmri-checkpoints/last.ckpt', 
+    #         device="cpu"
+    #     )
     infer_and_store(
-        input_subject_path='/Users/jan/Downloads/openneuro-datasets/preprocessed/ds000224/sub-MSC01',
-        output_path='/Users/jan/Downloads/fmri-ckpts/inference-fully-trained',
-        checkpoint_path='/Users/jan/Downloads/ruby-sunset-unet3d2_epoch=4799_val_loss=2670.47461.ckpt',
+        # input_subject_path='/Users/jan/Downloads/openneuro-datasets/preprocessed/ds000224/sub-MSC01',
+        input_subject_path='/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds000224/sub-MSC06', # My local input subject path
+        # output_path='/Users/jan/Downloads/fmri-ckpts/inference-fully-trained',
+        output_path='/home/mlc/dev/fmdc/downloads/fmri-checkpoints/inf-ckpt-trained', # My local output path
+        # checkpoint_path='/Users/jan/Downloads/ruby-sunset-unet3d2_epoch=4799_val_loss=2670.47461.ckpt',
+        checkpoint_path='/home/mlc/dev/fmdc/downloads/fmri-checkpoints/last.ckpt', # My local checkpoint path
         device='cpu'
     )
+
+# if __name__ == '__main__':
+    # infer_and_store(
+    #     # input_subject_path='/Users/jan/Downloads/openneuro-datasets/preprocessed/ds000224/sub-MSC01',
+    #     input_subject_path='/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds000224/sub-MSC10', # My local input subject path
+    #     # output_path='/Users/jan/Downloads/fmri-ckpts/inference-fully-trained',
+    #     output_path='/home/mlc/dev/fmdc/downloads/fmri-checkpoints/inf-ckpt-trained', # My local output path
+    #     # checkpoint_path='/Users/jan/Downloads/ruby-sunset-unet3d2_epoch=4799_val_loss=2670.47461.ckpt',
+    #     checkpoint_path='/home/mlc/dev/fmdc/downloads/fmri-checkpoints/last.ckpt', # My local checkpoint path
+    #     device='cpu'
+    # )

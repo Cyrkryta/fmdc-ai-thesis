@@ -1,0 +1,31 @@
+[
+    {
+        "group": 1,
+        "imports": [],
+        "name": "0_in_b0d",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "1_in_fieldmap",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_in_b0d",
+            "1_in_fieldmap"
+        ],
+        "name": "2_fugue_correction",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "2_fugue_correction"
+        ],
+        "name": "3_out_b0_u",
+        "size": 1
+    }
+]

@@ -1,0 +1,70 @@
+{
+    "groups": [
+        {
+            "name": "Group_00001",
+            "procs": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "total": 5
+        }
+    ],
+    "links": [
+        {
+            "source": 0,
+            "target": 3,
+            "value": 1
+        },
+        {
+            "source": 1,
+            "target": 3,
+            "value": 1
+        },
+        {
+            "source": 2,
+            "target": 3,
+            "value": 1
+        },
+        {
+            "source": 3,
+            "target": 4,
+            "value": 1
+        }
+    ],
+    "maxN": 5,
+    "nodes": [
+        {
+            "group": 1,
+            "name": "0_in_volume",
+            "report": "/tmp/tmpkpiouibn/warp_to_mni/in_volume/_report/report.rst",
+            "result": "/tmp/tmpkpiouibn/warp_to_mni/in_volume/result_in_volume.pklz"
+        },
+        {
+            "group": 1,
+            "name": "1_in_warp",
+            "report": "/tmp/tmp4yvsi5fz/warp_to_mni/in_warp/_report/report.rst",
+            "result": "/tmp/tmp4yvsi5fz/warp_to_mni/in_warp/result_in_warp.pklz"
+        },
+        {
+            "group": 1,
+            "name": "2_in_premat",
+            "report": "/tmp/tmp8dn41nit/warp_to_mni/in_premat/_report/report.rst",
+            "result": "/tmp/tmp8dn41nit/warp_to_mni/in_premat/result_in_premat.pklz"
+        },
+        {
+            "group": 1,
+            "name": "3_apply_warp",
+            "report": "/tmp/tmpy74dryu6/warp_to_mni/apply_warp/_report/report.rst",
+            "result": "/tmp/tmpy74dryu6/warp_to_mni/apply_warp/result_apply_warp.pklz"
+        },
+        {
+            "group": 1,
+            "name": "4_out_volume",
+            "report": "/tmp/tmp3q28nfg1/warp_to_mni/out_volume/_report/report.rst",
+            "result": "/tmp/tmp3q28nfg1/warp_to_mni/out_volume/result_out_volume.pklz"
+        }
+    ]
+}

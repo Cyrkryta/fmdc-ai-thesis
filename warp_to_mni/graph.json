@@ -1,0 +1,38 @@
+[
+    {
+        "group": 1,
+        "imports": [],
+        "name": "0_in_volume",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "1_in_warp",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "2_in_premat",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "0_in_volume",
+            "1_in_warp",
+            "2_in_premat"
+        ],
+        "name": "3_apply_warp",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "3_apply_warp"
+        ],
+        "name": "4_out_volume",
+        "size": 1
+    }
+]
