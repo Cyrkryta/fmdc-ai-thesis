@@ -38,7 +38,7 @@ def load_data_from_path(subject_path):
     img_b0_d = data_util.get_nii_img(b0_d_path)
     img_b0_u = data_util.get_nii_img(b0_u_path)
     img_mask = data_util.get_nii_img(mask_path)
-    img_fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0]
+    img_fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0] # QUESTION: Why is this indexed, won't this provide the wrong answer in the end?
 
     '''# Pad array since I stupidly used template with dimensions not factorable by 8
     # Assumes input is (77, 91, 77) and pad to (80, 96, 80) with zeros
@@ -83,6 +83,7 @@ def load_data_from_path(subject_path):
     min_img_b0_d = 0  # Assumes lower bound is zero (direct from scanner)
     img_b0_d = data_util.normalize_img(img_b0_d, max_img_b0_d, min_img_b0_d, 1, -1)
     img_b0_u = data_util.normalize_img(img_b0_u, max_img_b0_d, min_img_b0_d, 1, -1)  # Use min() and max() from distorted data
+    # QUESTION: Why is the fieldmap not being 
 
     '''# Set "data" and "target"
     img_data = np.concatenate((img_b0_d, img_t1), axis=1)
