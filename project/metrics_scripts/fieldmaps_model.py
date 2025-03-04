@@ -30,12 +30,12 @@ class FieldmapsModelMetricsComputation(MetricsComputationBase):
 
         rng = torch.Generator()
         rng.manual_seed(0)
-        _, val_paths, _ = torch.utils.data.random_split(
+        _, val_paths, test_paths = torch.utils.data.random_split(
             subject_paths, (train_count, val_count, test_count),
             generator=rng
         )
 
-        return list(val_paths)
+        return list(test_paths)
 
     def load_input_samples(self, subject_path):
         img_t1_all, img_b0_d_all, img_b0_u_all, img_mask_all, img_fieldmap_all, b0u_affine_all, fieldmap_affine_all, echo_spacing_all = fmri_data_util.load_data_from_path(subject_path)

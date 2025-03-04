@@ -140,4 +140,4 @@ scripts/INPUTS/
 scripts/OUTPUTS/
 
 # Undistort subject
-/undistort_subject/
+undistort_subject/

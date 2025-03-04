@@ -14,12 +14,12 @@ if __name__ == '__main__':
     Compute all metrics that evaluate a model's performance on removing distortion artefacts.
     """
 
-    mode = 'k-fold-fieldmaps-model'
+    mode = 'fieldmaps-model'
 
     if mode == 'fieldmaps-model':
         metrics_computation = FieldmapsModelMetricsComputation(
-            checkpoint_path='/Users/jan/Downloads/ruby-sunset-unet3d2_epoch=4799_val_loss=2670.47461.ckpt',
-            dataset_root='/Users/jan/Downloads/openneuro-datasets/preprocessed/ds*/',
+            checkpoint_path='/home/mlc/dev/fmdc/trained-models/jan-models/jan_ruby-sunset-unet3d2_epoch=4799_val_loss=2670.47461.ckpt',
+            dataset_root='/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds*/',
             device='cpu'
         ).compute_metrics()
     elif mode == 'k-fold-fieldmaps-model':
