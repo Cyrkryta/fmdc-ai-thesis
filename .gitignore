@@ -134,3 +134,7 @@ MNIST
 
 # Large binaries for Docker image
 extra/
+
+# INPUTS / OUTPUTS for baseline
+scripts/INPUTS/
+scripts/OUTPUTS/

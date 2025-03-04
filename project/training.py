@@ -106,46 +106,46 @@ if __name__ == '__main__':
     print(f'Running on {device}!')
 
     data_module = FMRIDataModule(dataset_paths=glob.glob(args.training_dataset_path), batch_size=args.batch_size, device=device)
-    unet3d = UNet3DFieldmap()
+    # unet3d = UNet3DFieldmap()
 
-    # wandb.init(project='field-map-ai')
-    # wandb_logger = WandbLogger(project='field-map-ai')
+    # # wandb.init(project='field-map-ai')
+    # # wandb_logger = WandbLogger(project='field-map-ai')
 
-    # Setting up weights and biases for training
-    wandb.init(project='fmdc')
-    wandb_logger = WandbLogger(project='fmdc')
+    # # Setting up weights and biases for training
+    # wandb.init(project='fmdc')
+    # wandb_logger = WandbLogger(project='fmdc')
 
-    # Defining validation times
-    # val_every_n_epochs = 100
-    val_every_n_epochs = 3 # Validation times lowered for testing purposes
+    # # Defining validation times
+    # # val_every_n_epochs = 100
+    # val_every_n_epochs = 3 # Validation times lowered for testing purposes
 
-    checkpoint_prefix = f"{wandb.run.id}_"
-    checkpoint_callback = ModelCheckpoint(
-        dirpath=args.checkpoint_path,
-        filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}",
-        every_n_epochs=val_every_n_epochs,
-        save_top_k=1,
-        monitor='val_loss',
-        save_last=True # For testing purposes
-    )
+    # checkpoint_prefix = f"{wandb.run.id}_"
+    # checkpoint_callback = ModelCheckpoint(
+    #     dirpath=args.checkpoint_path,
+    #     filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}",
+    #     every_n_epochs=val_every_n_epochs,
+    #     save_top_k=1,
+    #     monitor='val_loss',
+    #     save_last=True # For testing purposes
+    # )
 
-    # This early stopping configuration is only valid for the fieldmap model variant
-    early_stop_callback = EarlyStopping(monitor='val_loss', mode='min', min_delta=10, patience=5)
+    # # This early stopping configuration is only valid for the fieldmap model variant
+    # early_stop_callback = EarlyStopping(monitor='val_loss', mode='min', min_delta=10, patience=5)
 
-    trainer = L.Trainer(
-        max_epochs=args.max_epochs,
-        log_every_n_steps=3, # Low logging for testing
-        callbacks=[checkpoint_callback, early_stop_callback],
-        default_root_dir=args.checkpoint_path,
-        check_val_every_n_epoch=val_every_n_epochs,
-        logger=wandb_logger
-    )
+    # trainer = L.Trainer(
+    #     max_epochs=args.max_epochs,
+    #     log_every_n_steps=3, # Low logging for testing
+    #     callbacks=[checkpoint_callback, early_stop_callback],
+    #     default_root_dir=args.checkpoint_path,
+    #     check_val_every_n_epoch=val_every_n_epochs,
+    #     logger=wandb_logger
+    # )
 
-    trainer.fit(
-        model=unet3d,
-        train_dataloaders=data_module.train_dataloader(),
-        val_dataloaders=data_module.val_dataloader()
-    )
+    # trainer.fit(
+    #     model=unet3d,
+    #     train_dataloaders=data_module.train_dataloader(),
+    #     val_dataloaders=data_module.val_dataloader()
+    # )
 
     # Perform inference and evaluation of the trained model
     '''_infer_sample(

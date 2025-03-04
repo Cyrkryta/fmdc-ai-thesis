@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch
 import volumentations
 from torch.utils.data import DataLoader, Dataset
+import json
 
 from data import fmri_data_util
 from data import augmentations
@@ -104,6 +105,30 @@ class FMRIDataModule(pl.LightningDataModule):
             subject_paths, (train_count, val_count, test_count),
             generator=rng
         )
+
+        # Create json paths for the subject files.
+        if hasattr(train_paths, "indices"):
+            train_paths = [subject_paths[i] for i in train_paths.indices]
+            val_paths = [subject_paths[i] for i in val_paths.indices]
+            test_paths = [subject_paths[i] for i in test_paths.indices]
+        else:
+            train_paths = list(train_paths)
+            val_paths = list(val_paths)
+            test_paths = list(test_paths)
+
+        print(f"Train Paths: {train_paths}")
+        print(f"Validation Paths: {val_paths}")
+        print(f"Test Paths: {test_paths}")
+
+        # Write each set of paths to its own JSON file
+        with open("train_paths.json", "w") as f:
+            json.dump(train_paths, f, indent=4)
+        with open("val_paths.json", "w") as f:
+            json.dump(val_paths, f, indent=4)
+        with open("test_paths.json", "w") as f:
+            json.dump(test_paths, f, indent=4)
+
+        print("JSON files for train, validation, and test paths have been created.")
 
         self.train_dataset = FMRIDataset(subject_paths=train_paths, device=self.device, augment=False)  # Disable augmentations for now
         self.val_dataset = FMRIDataset(subject_paths=val_paths, device=self.device, augment=False)
