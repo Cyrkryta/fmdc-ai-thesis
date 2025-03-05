@@ -28,7 +28,7 @@ if path.exists(input_dir) or path.exists(output_dir):
 os.makedirs(input_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)
 
-with open('val_paths.json', 'r') as f:
+with open('/home/mlc/dev/fmdc/fmdc-ai-thesis/val_paths_single.json', 'r') as f:
     val_paths = json.load(f)['val_paths']
 
 for p in tqdm(val_paths):
@@ -41,11 +41,14 @@ for p in tqdm(val_paths):
     subject_output_dir = path.join(output_dir, dataset, subject)
 
     fmri_img = nib.load(path.join(p, 'b0_d.nii.gz'))
+    # unsliced_fmri = np.array(fmri_img.dataobj)
     unsliced_fmri = np.array(fmri_img.dataobj)
 
-    number_of_timesteps = unsliced_fmri.shape[3]
+    # number_of_timesteps = unsliced_fmri.shape[3]
+    number_of_timesteps = unsliced_fmri.shape[3] 
 
-    for t in range(number_of_timesteps):
+    # for t in range(number_of_timesteps):
+    for t in range(number_of_timesteps)[:2]: # Only two timesteps
         print(f'Undistorting timestep {t} of {number_of_timesteps}...')
 
         timestep_input_dir = path.join(subject_input_dir, f't-{t:03d}')
@@ -66,18 +69,38 @@ for p in tqdm(val_paths):
         if path.exists(path.join(timestep_output_dir, 'b0_all_topup.nii.gz')):
             print('Skipping because it already exists!')
             continue
-
+        
+        # Start the time for analysis
         start = time.time()
 
-        with subprocess.Popen(f'docker run --rm -v {timestep_input_dir}:/INPUTS/  -v {timestep_output_dir}:/OUTPUTS/ -v {path.join(os.getcwd(), "license.txt")}:/extra/freesurfer/license.txt -v {path.join(os.getcwd(), "synb0.cnf")}:/extra/synb0.cnf --user $(id -u):$(id -g) field-map-ai:0.0.1 --stripped', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as process:
-            # process.communicate(password.encode())
+        # Path to license and config files
+        license_file = '/home/mlc/dev/fmdc/fmdc-ai-thesis/scripts/baseline-files/license.txt'
+        synb0_cnf_file = '/home/mlc/dev/fmdc/fmdc-ai-thesis/scripts/baseline-files/synb0.cnf'
+
+        # Define the command
+        command = (
+        "docker run --rm \\\n"
+        f"  -v {timestep_input_dir}:/INPUTS/ \\\n"                  # Input data
+        f"  -v {timestep_output_dir}:/OUTPUTS/ \\\n"                # Output data
+        f"  -v {license_file}:/extra/freesurfer/license.txt \\\n"   # Freesurfer license
+        f"  -v {synb0_cnf_file}:/extra/synb0.cnf \\\n"              # Topup configuration file
+        "  --user $(id -u):$(id -g) \\\n"                           # User information
+        "  leonyichencai/synb0-disco:v3.1 \\\n"                     # Docker image
+        "  --stripped"                                              # Images are already skullstrippeds
+        )
+
+        # Run the process 
+        with subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as process:
             for line in process.stdout:
                 print(line.decode('utf8'))
 
+        # Stop the time
         end = time.time()
 
+        # Add the subject to computation times
         if f'{dataset}-{subject}' not in computation_times:
             computation_times[f'{dataset}-{subject}'] = {}
 
+        # Calculate and store the computation times
         computation_times[f'{dataset}-{subject}'][f't-{t:03d}'] = end - start
         _store_computation_times()
