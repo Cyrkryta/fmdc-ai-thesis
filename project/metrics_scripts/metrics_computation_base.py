@@ -47,11 +47,12 @@ class MetricsComputationBase(object):
             mse_losses_distorted = []
             ssim_out = []
             ssim_distorted = []
-            affine = None
+            # affine = None
 
             for sample in self.load_input_samples(subject_path):
                 start = time.time()
                 undistorted_b0, fieldmap_out = self.get_undistorted_b0(sample)
+                # undistorted_b0 = self.get_undistorted_b0(sample)
                 end = time.time()
                 self.inference_compute_times.append(end - start)
                 affine_b0 = sample['b0u_affine']

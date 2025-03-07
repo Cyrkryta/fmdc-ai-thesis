@@ -26,11 +26,17 @@ class BaselineModelMetricsComputation(MetricsComputationBase):
         mask_path = path.join(input_path, 'b0_mask.nii.gz')
         out_path = path.join(output_path, 'b0_all.nii.gz')
 
+        # Load affine from b0_u using nibabel
+        img_b0_u_nii = data_util.load_only_nii(b0_u_path)
+        affine_b0_u = img_b0_u_nii.affine
+
         # Get image
         img_b0_d = data_util.get_nii_img(b0_d_path)
         img_b0_u = data_util.get_nii_img(b0_u_path)[:, :, :, timestep_idx]
+        # img_b0_u = data_util.get_nii_img(b0_u_path) # TODO: Check if this is correct
         img_mask = data_util.get_nii_img(mask_path)
         img_out = data_util.get_nii_img(out_path)[:, :, :, 0]
+        # img_out = data_util.get_nii_img(out_path) # TODO: Check if this is correct
 
         img_b0_d = np.transpose(img_b0_d, axes=(2, 0, 1))
         img_b0_u = np.transpose(img_b0_u, axes=(2, 0, 1))
@@ -51,13 +57,13 @@ class BaselineModelMetricsComputation(MetricsComputationBase):
 
         img_mask = np.array(img_mask != 0, dtype=np.uint8)
 
-        return img_b0_d, img_b0_u, img_mask, img_out
-
+        return img_b0_d, img_b0_u, img_mask, img_out, affine_b0_u
+    
     def load_input_samples(self, subject_path):
         time_series = []
 
         for idx, time_step_path in enumerate(sorted(glob.glob(path.join(subject_path, 't-*')))):
-            img_b0_d, img_b0_u, img_mask, img_out = self._load_all_data(
+            img_b0_d, img_b0_u, img_mask, img_out, affine_b0_out = self._load_all_data(
                 input_path=time_step_path,
                 output_path=time_step_path.replace('INPUTS', 'OUTPUTS'),
                 timestep_idx=idx
@@ -67,10 +73,12 @@ class BaselineModelMetricsComputation(MetricsComputationBase):
                 'b0d': img_b0_d,
                 'b0u': img_b0_u,
                 'mask': img_mask,
-                'model_output': img_out
+                'model_output': img_out,
+                'b0u_affine': affine_b0_out,
+                'fieldmap_affine': None # The baseline model doesn't create any fieldmap
             })
 
         return time_series
 
     def get_undistorted_b0(self, sample):
-        return sample['model_output']
+        return sample['model_output'], None

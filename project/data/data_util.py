@@ -19,6 +19,10 @@ def unnormalize_img(img, max_img, min_img, max, min):
 
     return img
 
+def load_only_nii(path_nii):
+    nii = nib.load(path_nii)
+    return nii
+
 
 def get_nii_img(path_nii):
     nii = nib.load(path_nii)

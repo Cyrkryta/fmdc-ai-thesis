@@ -14,7 +14,7 @@ if __name__ == '__main__':
     Compute all metrics that evaluate a model's performance on removing distortion artefacts.
     """
 
-    mode = 'fieldmaps-model'
+    mode = 'baseline'
 
     if mode == 'fieldmaps-model':
         metrics_computation = FieldmapsModelMetricsComputation(
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         ).compute_metrics()
     elif mode == 'baseline':
         BaselineModelMetricsComputation(
-            subject_paths='/Users/jan/Documents/Studium/Master/UCPH/semester-06/master-thesis/metrics/baseline-paper/INPUTS/ds*/sub-*/',
+            subject_paths='/home/mlc/dev/fmdc/fmdc-ai-thesis/scripts/INPUTS/ds*/sub-*',
             device='cpu'
         ).compute_metrics()
     elif mode == 'mean-fieldmaps':
