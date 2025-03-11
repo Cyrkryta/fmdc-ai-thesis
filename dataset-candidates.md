@@ -43,5 +43,6 @@ NEWLY FOUND DATASETS
 |-------------------------------------------------------------------------------------------------------------------------|--------|---------------------------|----------------------------------------|-------|--------|------------------------------------------------------|
 |An fMRI dataset for whole-body somatotopic mapping in humans                                                                                              |ds004044|Magnitude-Phasediff        |Yes                                     |Siemens|68     |https://openneuro.org/datasets/ds004044/versions/2.0.3|
 |changepoint fmri                                                                                              |ds003170|Magnitude-Phasediff        |Assuming yes                                     |Siemens|16     |https://openneuro.org/datasets/ds003170/versions/2.0.0|
+https://openneuro.org/datasets/ds004299/versions/1.0.0 (Potential PA-AP), https://openneuro.org/datasets/ds004217/versions/1.0.0 (Potential PA-AP), https://openneuro.org/datasets/ds004073/versions/1.0.1 (Poential mag-diff, no resting) https://openneuro.org/datasets/ds003745/versions/2.1.1 (potential mag-diff, no resting), https://openneuro.org/datasets/ds002643/versions/1.1.0 (potential, Philips)
 
 
