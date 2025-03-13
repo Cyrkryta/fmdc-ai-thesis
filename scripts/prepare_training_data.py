@@ -18,6 +18,9 @@ from nipype import SelectFiles
 Function for getting the median time frame
 """
 def GetMedianTF(in_file):
+    # Import necessary dependency
+    import nibabel as nib
+    # Return the median
     return int(nib.load(in_file).header['dim'][4] / 2)
 
 """
@@ -31,6 +34,9 @@ def SubtractFive(in_value):
 Intensity normalize an input file
 """
 def IntensityNormalization(in_file):
+    # Import the necessary dependencies
+    import nibabel as nib
+    import numpy as np
     # Load image and image data from the file
     img = nib.load(in_file)
     data = img.get_fdata()
@@ -247,4 +253,10 @@ if __name__ == '__main__':
     print(f"Destination dataset root directory: {DEST_DATASET_ROOT_DIR}")
     print(f"JSON processing configuration path: {JSON_PROCESSING_CONFIG_PATH}\n")
 
-    # _convert_all_datasets(dataset_root=dataset_root, output_root=output_root, fsl_dir=fsl_dir)
+    # Run the processing pipeline
+    _convert_all_datasets(
+        SOURCE_DATASET_ROOT_DIR=SOURCE_DATASET_ROOT_DIR,
+        DEST_DATASET_ROOT_DIR=DEST_DATASET_ROOT_DIR,
+        FSL_DIR=FSL_DIR,
+        JSON_PROCESSING_CONFIG_PATH=JSON_PROCESSING_CONFIG_PATH
+    )

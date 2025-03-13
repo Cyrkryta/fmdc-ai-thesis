@@ -1,5 +1,5 @@
 <div align="center">    
- 
+
 # Field Map Distortion Correction Master's Thesis for IT & Cognition
 
 </div>
@@ -10,56 +10,39 @@ Estimate and evaluate undistorted fMRI scans from a distorted scan and T1-weight
 #### Description
 The project aims to use a ```U-NET``` deep learning model for ```estimateing fieldmaps``` used for ```fMRI distortion correction```. It is a part of the ```final thesis``` for the IT & Cognition Master's program at the ```University of Copenhagen```, and is carried out in collaboration with the ```Neurobiology Research Unit (NRU)``` located at Rigshospitalet, Copenhagen. The thesis builds upon the work done by ```Jan Tagscherer```, a previous master's student affiliated with the ```NRU```.
 
-<!--
-<div align="center">    
- 
-# Field Map AI
+## Data Acquisition and Processing
+#### Data Acquisition
+Identify datasets with data that should be used for testing and training. The respective dataset paths should be structured in ```trainval_file_paths.json``` and ```test_file_paths.json``` as follows, inserting the respective paths and subject holders.
 
-</div>
- 
-## Description
-Estimate an undistorted fMRI scan from a distorted scan and an accompanying T1-weighted scan.
+    "ds004182": {
+        "anat": "{subject_path}/anat/{subject}_rec-NORM_T1w.nii.gz",
+        "fmap": {
+            "magnitude": "{subject_path}/fmap/{subject}_magnitude1.nii.gz",
+            "phasediff": "{subject_path}/fmap/{subject}_phasediff.nii.gz"
+        },
+        "func": "{subject_path}/func/{subject}_task-rest_run-1_bold.nii.gz",
+        "echospacing": 0.000265001
+    }
+    
+Once the files are created, used `datalad` to retrieve the `dataset` and `files`, and remove these again. First, retrieve datasets by running `datalad install https://github.com/OpenNeuroDatasets/{dataset}.git` manually. 
 
-## Project Structure
-- The `project` directory contains the main part of the code. Top-level Python files can be executed directly.
-- The `scripts` directory contains useful small standalone scripts for data preparation and model visualization.
+Retrieve the necessary files and move them to a seperate non-git folder by running the following commands for test and train (OBS! This assumes need for subsampling subjects, hence --n_subjects).
 
-## Running it
-Install all dependencies in an environment management tool of your choice. This has been tested with conda.
-
-### Training
-The following command will train a model from scratch, given a dataset that has been preprocessed such that it can be used by this project. Training will be performed on the fieldmap-based model variant and will take around 15 hours on a TITAN V GPU. If you want to train the direct model instead you can just replace the underlying model in the source code.
-
-```bash
-python project/training.py --training_dataset_path=/path/to/preprocessed/datasets/ds*/ --checkpoint_path=/path/to/checkpoint/output/ --max_epochs=100000 --batch_size=32
+Training command:
+```
+python move_datalad_files.py --SOURCE_DIR_PATH /path/to/trainval_data_source --DEST_DIR_PATH /path/to/trainval_destination --CONFIG_PATH /path/to/trainval_file_paths.json --n_subjects {number of subjects to subsample} 
 ```
 
-For convenience (and while my storage space allows), you can also download pre-trained checkpoints of the model. The checkpoint that has been used for evaluation in my thesis can be found [here](https://drive.google.com/file/d/1KuMoE_z6MD-NTB9IU9OVSDh6DA9KmdZM/view?usp=sharing). A set of ten checkpoints created during k-fold validation can be downloaded [here](https://drive.google.com/file/d/1_T0NINnIIHtZHG17kQIVCLLV793EtZV3/view?usp=sharing).
+Test command:
+```
+python move_datalad_files.py --SOURCE_DIR_PATH /path/to/test_data_source --DEST_DIR_PATH /path/to/test_destination --CONFIG_PATH /path/to/test_file_paths.json --n_subjects {number of subjects to subsample} 
+```
 
-### Inference
-Given a single sample from a dataset and a pre-trained model, `project/inference.py` will run inference on that sample in order to generate the undistorted fMRI approximation.
+#### Data Preprocessing
+To convert data to a suitable format for the model, the `prepare_data.py` file should be run. Once again, for overview reasons, create json files only following the format in the previous. 
 
-### Evaluation
-The main script for evaluating models can be found in `project/metrics_scripts/compute_metrics.py`. Depending on the mode you set it to, it can compute a set of metrics for the direct model, the fieldmap model, and both baseline models over a given validation/test dataset. For all samples, it outputs SSIM, MSE, and correlation coefficients, as well as aggregates of these.
+Make sure to have `FSL` installed, and run the command
 
-Furthermore, the script in `project/infer_correlation_matrices.py` can be used to create matrices of pair-wise temporal correlation between the ground-truth undistorted images and the results from both the direct and the field map model. These are saved as Numpy arrays and as corresponding VTI files to be (volume-)visualized with Paraview.
-
-### Miscellaneous Scripts
-The `scripts` directory contains a bunch of useful scripts.
-- `prepare_average_fieldmap_data.py` aggregates all fieldmaps from the training split to create the model for the mean fieldmap baseline.
-- `prepare_training_data.py` does everything that is necessary to convert OpenNeuro datasets into preprocessed datasets to be used with this project.
-- `run_baseline_model_on_validation_samples.py` runs the paper baseline model on all samples of the validation split. These outputs can in turn be used to compute evaluation metrics.
-- `sync_wandb.py` repeatedly synchronizes wandb runs from the firewalled GPU server used for training by mounting its data volume.
-- `visualize_models.py` creates graphs visualizing the model architectures.
-
-## Next Steps
-There are multiple open tasks that require further exploration:
-
-- [x] Train and evaluate models for various dataset splits, allowing for a better quantification of model performance
-- [ ] Enhance the dataset by adding more OpenNeuro datasets with varying subject health and scanner types (see `dataset-candidates.md` for a list of datasets that come into question)
-- [x] Compute SSIM as a metric
-- [ ] Re-align and distortion-correct data after inference to show general purpose
-- [ ] For the temporal correlation metric, do a z-transform of the r-values and do voxel-wise t-tests
-- [ ] Also show best/worst subjects as examples rather than random ones
-- [ ] Add a scatterplot similar to figure 5.7, but for each model/baseline scatterplot the performance on all subjects allowing for inspection of their distribution shape, potentially alos add a convex function that fits an ellipsoid
--->
+```
+python prepare_data.py --FSL_DIR /path/to/fsl --SOURCE_DATASET_ROOT_DIR /path/to/retrieved/data/files/directory --DEST_DATASET_ROOT_DIR /path/to/processed/output/directory --JSON_PROCESSING_CONFIG_PATH /path/to/new/json/config/file
+```
