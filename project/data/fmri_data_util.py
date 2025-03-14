@@ -28,6 +28,10 @@ def load_data_from_path(subject_path):
     mask_path = os.path.join(subject_path, 'b0_mask.nii.gz')
     fieldmap_path = os.path.join(subject_path, 'field_map.nii.gz')
 
+    # Define test file paths
+    b0alltf_d_path = os.path.join(subject_path, 'b0alltf_d.nii.gz')
+    b0alltf_u_path = os.path.join(subject_path, 'b0alltf_u.nii.gz')
+
     # Get meta information
     dataset_path = Path(subject_path).parent.absolute()
     with open(os.path.join(dataset_path, 'dataset_meta.json')) as f:
@@ -38,7 +42,15 @@ def load_data_from_path(subject_path):
     img_b0_d = data_util.get_nii_img(b0_d_path)
     img_b0_u = data_util.get_nii_img(b0_u_path)
     img_mask = data_util.get_nii_img(mask_path)
-    img_fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0] # QUESTION: Why is this indexed, won't this provide the wrong answer in the end?
+    img_fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0]
+
+    # Check if the test files exists and act accordingly
+    if os.path.exists(b0alltf_d_path) and os.path.exists(b0alltf_u_path):
+        img_b0alltf_d = data_util.get_nii_img(b0alltf_d_path)
+        img_b0alltf_u = data_util.get_nii_img(b0alltf_u_path)
+    else:
+        img_b0alltf_d = None
+        img_b0alltf_u = None
 
     '''# Pad array since I stupidly used template with dimensions not factorable by 8
     # Assumes input is (77, 91, 77) and pad to (80, 96, 80) with zeros
@@ -83,11 +95,14 @@ def load_data_from_path(subject_path):
     min_img_b0_d = 0  # Assumes lower bound is zero (direct from scanner)
     img_b0_d = data_util.normalize_img(img_b0_d, max_img_b0_d, min_img_b0_d, 1, -1)
     img_b0_u = data_util.normalize_img(img_b0_u, max_img_b0_d, min_img_b0_d, 1, -1)  # Use min() and max() from distorted data
-    # QUESTION: Why is the fieldmap not being 
-
-    '''# Set "data" and "target"
-    img_data = np.concatenate((img_b0_d, img_t1), axis=1)
-    img_target = img_b0_u'''
+    
+    # Check for all tf
+    if img_b0alltf_d is not None and img_b0alltf_u is not None:
+        img_b0alltf_d = data_util.nii2torch(img_b0alltf_d)
+        img_b0alltf_u = data_util.niiu2torch(img_b0alltf_u)
+        # Optionally normalize these images if they follow similar conventions
+        img_b0alltf_d = data_util.normalize_img(img_b0alltf_d, max_img_b0_d, min_img_b0_d, 1, -1)
+        img_b0alltf_u = data_util.normalize_img(img_b0alltf_u, max_img_b0_d, min_img_b0_d, 1, -1)
 
     img_mask = np.array(img_mask, dtype=np.uint8)
 
@@ -97,7 +112,10 @@ def load_data_from_path(subject_path):
     fieldmap_affine = nib.load(fieldmap_path).affine
     fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
 
-    echo_spacing = np.array(dataset_meta['echoSpacing'])
+    echo_spacing = np.array(dataset_meta['echospacing'])
     echo_spacing = np.repeat(echo_spacing, number_timesteps, axis=0)
 
-    return img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, b0u_affine, fieldmap_affine, echo_spacing
+    # Return the loaded images along with the test images if available
+    return (img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, 
+            b0u_affine, fieldmap_affine, echo_spacing,
+            img_b0alltf_d, img_b0alltf_u)

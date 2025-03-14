@@ -115,7 +115,11 @@ if __name__ == '__main__':
 
     # Expand the provided dataset paths
     TRAINING_DATASET_PATHS = glob.glob(TRAINING_DATASET_PATH)
-    TEST_DATASET_PATHS = glob.glob(TEST_DATASET_PATH) if TEST_DATASET_PATH is not None else TEST_DATASET_PATH=None
+
+    if TEST_DATASET_PATH is not None:
+        TEST_DATASET_PATHS = glob.glob(TEST_DATASET_PATH)
+    else:
+        TEST_DATASET_PATHS=None
 
     # Initialize the data module and 3D unet model
     data_module = FMRIDataModule(TRAIN_DATASET_PATHS=TRAINING_DATASET_PATHS, BATCH_SIZE=batch_size, device=device, TEST_DATASET_PATHS=TEST_DATASET_PATHS)
@@ -157,13 +161,16 @@ if __name__ == '__main__':
         logger=wandb_logger                                                 # Logging endpoint
     )
 
+    print("Wow, I reached the end right before training.")
+
+
     # Train the model. Skrt skrt. 
     trainer.fit(
         model=model,
         train_dataloaders=data_module.train_dataloader(),
         val_dataloaders=data_module.val_dataloader()
     )
-
+"""
     # Perform inference and evaluation of the trained model
     '''_infer_sample(
         model_path=checkpoint_callback.best_model_path,
@@ -175,3 +182,4 @@ if __name__ == '__main__':
     unet3d.to(device)
 
     _evaluate_temporal_correlation(unet3d, data_module.metrics_dataloader())'''
+"""

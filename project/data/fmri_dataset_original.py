@@ -28,92 +28,114 @@ Class for creating the data as intended
 class FMRIDataset(Dataset):
     # Initialize the various components
     def __init__(self, SUBJECT_PATHS, device, augment=False, split_temporally=True):
-        # Set up variables
+        # Transformation component for augmentations
         self.transform = augmentations.Compose([
             augmentations.Rotate((-15, 15), (-15, 15), (-15, 15)),
             augmentations.ElasticTransform((0, 0.25), interpolation=2),
             augmentations.RandomScale([0.9, 1.1], interpolation=1),
             augmentations.Resize((36, 64, 64), interpolation=1, resize_type=0)
         ])
+        # Set device and augmentation state
         self.device = device
         self.augment = augment
-        self.split_temporally = split_temporally
-        self.SUBJECT_PATHS = SUBJECT_PATHS
-        self.index_mapping = []
+        # Placeholders for the data output
+        self.img_t1 = []
+        self.img_b0_d = []
+        self.img_b0_u = []
+        self.img_mask = []
+        self.img_fieldmap = []
+        self.affine = []
+        self.echo_spacing = []
+        self.img_b0_d_alltf = [] # Remains empty if fulltf not provided
+        self.img_b0_u_alltf = [] # Remains empty if fulltf not provided
 
-        # Go through each subject
-        for SUBJECT_PATH in self.SUBJECT_PATHS:
-            # Retrieve a small amount of data
-            img_t1, _, _, _, _, _, _, _, _, _ = fmri_data_util.load_data_from_path(SUBJECT_PATH)
+        # Go through each subject in the paths
+        for SUBJECT_PATH in SUBJECT_PATHS:
+            # Retrieve the tuple
+            img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, b0u_affine, _, echo_spacing, img_b0alltf_d, img_b0alltf_u = fmri_data_util.load_data_from_path(SUBJECT_PATH)
+            # Retrieve the images
+            # img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, b0u_affine, _, echo_spacing = fmri_data_util.load_data_from_path(SUBJECT_PATH)
 
-            # Retrieve a time_seq
-            try:
-                n_timepoints = len(img_t1)
-            except Exception:
-                n_timepoints = 1
-            for t in range(n_timepoints):
-                self.index_mapping.append((SUBJECT_PATH, t))
+            # Split images on temporal access into corresponding independent samples
+            if split_temporally:
+                self.img_t1.extend(list(img_t1))
+                self.img_b0_d.extend(list(img_b0_d))
+                self.img_b0_u.extend(list(img_b0_u))
+                self.img_mask.extend(list(img_mask))
+                self.img_fieldmap.extend(list(img_fieldmap))
+                self.affine.extend(list(b0u_affine))
+                self.echo_spacing.extend(list(echo_spacing))
+
+                # Append extra test files only if they exist
+                if img_b0alltf_d is not None and img_b0alltf_u is not None:
+                    self.img_b0_d_alltf.extend(list(img_b0alltf_d))
+                    self.img_b0_u_alltf.extend(list(img_b0alltf_u))
+                else:
+                    pass
+
+            # Just append the data if splitting is disabled
+            else:
+                self.img_t1.append(img_t1)
+                self.img_b0_d.append(img_b0_d)
+                self.img_b0_u.append(img_b0_u)
+                self.img_mask.append(img_mask)
+                self.img_fieldmap.append(img_fieldmap)
+                self.affine.append(b0u_affine)
+                self.echo_spacing.append(echo_spacing)
+
+                if img_b0alltf_d is not None and img_b0alltf_u is not None:
+                    self.img_b0_d_alltf.append(img_b0alltf_d)
+                    self.img_b0_u_alltf.append(img_b0alltf_u)
 
     # Return the length of the images
     def __len__(self):
-        return len(self.index_mapping)
+        return len(self.img_t1)
 
     # Get an item
     def __getitem__(self, idx):
-        # Get the subject path from the mapping
-        SUBJECT_PATH, t_idx = self.index_mapping[idx]
-
-        # Load the fulld subject data (on demand)
-        img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, b0u_affine, _, echo_spacing, img_b0alltf_d, img_b0alltf_u = fmri_data_util.load_data_from_path(SUBJECT_PATH)
-
-        # Select the timeslice
         data = {
-            't1': img_t1[t_idx],
-            'b0_d': img_b0_d[t_idx],
-            'b0_u': img_b0_u[t_idx],
-            'mask': img_mask[t_idx],
-            'fieldmap': img_fieldmap[t_idx]
+            'b0_d': self.img_b0_d[idx],
+            'b0_u': self.img_b0_u[idx],
+            't1': self.img_t1[idx],
+            'mask': self.img_mask[idx],
+            'fieldmap': self.img_fieldmap[idx]
         }
 
-        # Optionally include the extra files if they exist.
-        if (img_b0alltf_d is not None) and (img_b0alltf_u is not None):
-            data['b0alltf_d'] = img_b0alltf_d[t_idx]
-            data['b0alltf_u'] = img_b0alltf_u[t_idx]
-
-        # Grab affine and echo spacing for this timepoint.
-        affine = b0u_affine[t_idx]
-        echo_sp = echo_spacing[t_idx]
+        # Optionally include extra test files in the data dictionary
+        if self.img_b0_d_alltf and self.img_b0_u_alltf:
+            data['b0alltf_d'] = self.img_b0_d_alltf[idx]
+            data['b0alltf_u'] = self.img_b0_u_alltf[idx]
         
-        # Apply augmentation if enabled.
+        # Perform augmentation when getting item, if retrieved
         if self.augment:
             transformed_data = self.transform(data)
         else:
             transformed_data = data
 
-        # Stack to create a 2-channel input: distorted and T1 images.
-        img_data = torch.stack((
-            torch.from_numpy(transformed_data['b0_d']).float().to(self.device),
-            torch.from_numpy(transformed_data['t1']).float().to(self.device)
-        ))
+        # Stack the data to create a 2-channel input
+        img_data = torch.stack((torch.from_numpy(transformed_data['b0_d']).float().to(self.device), torch.from_numpy(transformed_data['t1']).float().to(self.device)))
 
+        # Create the output
         output = (
             img_data,
             torch.from_numpy(transformed_data['b0_u']).float().to(self.device),
             torch.from_numpy(transformed_data['mask']).bool().to(self.device),
             torch.from_numpy(transformed_data['fieldmap']).float().to(self.device),
-            torch.from_numpy(affine).float().to(self.device),
-            torch.from_numpy(np.asarray(echo_sp)).float().to(self.device)
-        )
+            torch.from_numpy(self.affine[idx]).float().to(self.device),
+            torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device)
+        )      
 
-        if ('b0alltf_d' in transformed_data) and ('b0alltf_u' in transformed_data):
+        # Optionally, include the extra test files if they exist
+        if 'b0alltf_d' in transformed_data and 'b0alltf_u' in transformed_data:
             extra = (
                 torch.from_numpy(transformed_data['b0alltf_d']).float().to(self.device),
                 torch.from_numpy(transformed_data['b0alltf_u']).float().to(self.device)
             )
-            return output + extra
+            # Return the combined output
+            return output + extra  
 
+        # Return the single output
         return output
-    
 """
 Module for creating the datasets
 """
@@ -175,17 +197,17 @@ class FMRIDataModule(pl.LightningDataModule):
 
             # Split the data
             total_train_count = len(TRAIN_SUBJECT_PATHS)
-            train_count = int(0.8 * total_train_count)
             # train_count = int(0.8 * total_train_count)
-            val_count = total_train_count - train_count
-            # val_count = int(0.2 * total_train_count)
-            # remaining = total_train_count - train_count - val_count
+            train_count = int(0.2 * total_train_count)
+            # val_count = total_train_count - train_count
+            val_count = int(0.2 * total_train_count)
+            remaining = total_train_count - train_count - val_count
 
             # Perform the seeded random split
             rng = torch.Generator()
             rng.manual_seed(0)
-            train_split, val_split = torch.utils.data.random_split(
-                TRAIN_SUBJECT_PATHS, (train_count, val_count), generator=rng
+            train_split, val_split, _ = torch.utils.data.random_split(
+                TRAIN_SUBJECT_PATHS, (train_count, val_count, remaining), generator=rng
             )
 
             # Retrieve the path indices
@@ -197,16 +219,13 @@ class FMRIDataModule(pl.LightningDataModule):
                 VAL_PATHS = list(val_split)
             
             # Define the test paths
+            # TEST_PATHS = TEST_SUBJECT_PATHS
             TEST_PATHS = TEST_SUBJECT_PATHS[:2]
-            # TEST_PATHS = TEST_SUBJECT_PATHS[:2]
 
             # Print out the paths
             print(f"Train Paths: {len(TRAIN_PATHS)}")
             print(f"Validation Paths: {len(VAL_PATHS)}")
             print(f"Test Paths (from training data): {len(TEST_PATHS)}")
-
-        # Save test paths as an attribute
-        self.TEST_PATHS = TEST_PATHS
 
         # Save the splits to json
         save_to_json(TRAIN_PATHS=TRAIN_PATHS, VAL_PATHS=VAL_PATHS, TEST_PATHS=TEST_PATHS)

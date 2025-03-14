@@ -12,19 +12,20 @@ Class:
 Computation base for computing the metrics on the fieldmap model
 """
 class FieldmapsModelMetricsComputation(MetricsComputationBase):
-    def __init__(self, checkpoint_path, dataset_root, device):
+    def __init__(self, CHECKPOINT_PATH, TEST_PATHS, device):
         # Call super
         super().__init__()
-
         # Define class variables and load the model
-        self.dataset_root = dataset_root
+        self.TEST_PATHS = TEST_PATHS
         self.device = device
-        self.model = UNet3DFieldmap.load_from_checkpoint(checkpoint_path, map_location=torch.device(device), encoder_map_location=torch.device(device), device=device)
+        self.model = UNet3DFieldmap.load_from_checkpoint(CHECKPOINT_PATH, map_location=torch.device(device), encoder_map_location=torch.device(device), device=device)
         self.model.to(device)
         self.model.eval()
 
     # Get all of the subject paths (computing the data again - should be changed)
     def get_subject_paths(self):
+        return self.TEST_PATHS
+
         subject_paths = fmri_data_util.collect_all_subject_paths(dataset_paths=glob.glob(self.dataset_root))
 
         total_count = len(subject_paths)
