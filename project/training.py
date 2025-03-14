@@ -1,7 +1,7 @@
+# Import the dependencies
 import argparse
 import glob
 import os.path
-
 import numpy as np
 import torch
 import pytorch_lightning as L
@@ -9,7 +9,6 @@ import wandb
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from tqdm import tqdm
-
 from data.fmri_dataset import FMRIDataModule
 from models.unet3d_fieldmap import UNet3DFieldmap
 import inference
@@ -87,65 +86,83 @@ def _evaluate_temporal_correlation(model, dataloader):
         'correlation_median': np.nanmedian(np.array(pearson_coefficients_out))
     })
 
-
+"""
+Main function for doing the training
+"""
 if __name__ == '__main__':
+    # Set up parser and arguments
     parser = argparse.ArgumentParser()
-    # parser.add_argument('--training_dataset_path', default='/Users/jan/Downloads/openneuro-datasets/preprocessed/ds*/')
-    parser.add_argument('--training_dataset_path', default='/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds*/') # My new and own path
-    # parser.add_argument('--checkpoint_path', default='/Users/jan/Downloads/fmri-ckpts')
-    parser.add_argument('--checkpoint_path', default='/home/mlc/dev/fmdc/downloads/fmri-checkpoints/')
-    parser.add_argument('--max_epochs', type=int, default=3)
-    parser.add_argument('--batch_size', type=int, default=32)
-    args = parser.parse_args()
+    parser.add_argument("--TRAINING_DATASET_PATH", required=True, help="Path to the training data")
+    parser.add_argument("--TEST_DATASET_PATH", default=None, help="Optional: Potentiel of seperate dataset path")
+    parser.add_argument("--CHECKPOINT_PATH", required=True, help="Path to hold the model checkpoint")
+    parser.add_argument("--max_epochs", type=int, default=3, help="Epochs for the model to run")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size to use in the model")
 
+    # parse and load the arguments
+    args = parser.parse_args()
+    TRAINING_DATASET_PATH = args.TRAINING_DATASET_PATH
+    TEST_DATASET_PATH = args.TEST_DATASET_PATH
+    CHECKPOINT_PATH = args.CHECKPOINT_PATH
+    max_epochs = args.max_epochs
+    batch_size = args.batch_size
+
+    # Set the device
     device = 'cpu'
     if torch.cuda.is_available():
         torch.multiprocessing.set_start_method('spawn')
         device = 'cuda'
+        print(f'Running on {device}!')
 
-    print(f'Running on {device}!')
+    # Expand the provided dataset paths
+    TRAINING_DATASET_PATHS = glob.glob(TRAINING_DATASET_PATH)
+    TEST_DATASET_PATHS = glob.glob(TEST_DATASET_PATH) if TEST_DATASET_PATH is not None else TEST_DATASET_PATH=None
 
-    data_module = FMRIDataModule(dataset_paths=glob.glob(args.training_dataset_path), batch_size=args.batch_size, device=device)
-    # unet3d = UNet3DFieldmap()
+    # Initialize the data module and 3D unet model
+    data_module = FMRIDataModule(TRAIN_DATASET_PATHS=TRAINING_DATASET_PATHS, BATCH_SIZE=batch_size, device=device, TEST_DATASET_PATHS=TEST_DATASET_PATHS)
+    model = UNet3DFieldmap()
+    
+    # Connect to weights and biases
+    wandb.init(project='field-map-ai')
+    wandb_logger = WandbLogger(project='field-map-ai')
 
-    # # wandb.init(project='field-map-ai')
-    # # wandb_logger = WandbLogger(project='field-map-ai')
+    # trianing variables
+    checkpoint_prefix = f"{wandb.run.id}_"
+    # every_n_epochs = 10
+    every_n_epochs = 100
+    # val_every_n_epochs = 10
+    val_every_n_epochs = 100
+    # log_every_n_steps = 10
+    log_every_n_steps = 100
 
-    # # Setting up weights and biases for training
-    # wandb.init(project='fmdc')
-    # wandb_logger = WandbLogger(project='fmdc')
+    # Define the checkpoint callbacks
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=CHECKPOINT_PATH,                                            # Output path for checkpoints
+        filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}",  # Checkpoint filename structure
+        every_n_epochs=every_n_epochs,                                      # How often should a checkpoint be saved
+        save_top_k=1,                                                       # Only save the best ckpt (override if better)
+        monitor='val_loss',                                                 # Monitors val_loss: lower the better
+        save_last=True                                                      # Always save the last model
+    )
 
-    # # Defining validation times
-    # # val_every_n_epochs = 100
-    # val_every_n_epochs = 3 # Validation times lowered for testing purposes
+    # Set up early stopping 
+    early_stop_callback = EarlyStopping(monitor='val_loss', mode='min', min_delta=10, patience=5)
 
-    # checkpoint_prefix = f"{wandb.run.id}_"
-    # checkpoint_callback = ModelCheckpoint(
-    #     dirpath=args.checkpoint_path,
-    #     filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}",
-    #     every_n_epochs=val_every_n_epochs,
-    #     save_top_k=1,
-    #     monitor='val_loss',
-    #     save_last=True # For testing purposes
-    # )
+    # Define the trainer
+    trainer = L.Trainer(
+        max_epochs=max_epochs,                                              # Max number of allowed epochs
+        log_every_n_steps=log_every_n_steps,                                # How often is the training loss computed and logged
+        callbacks=[checkpoint_callback, early_stop_callback],               # Callback to determine if a model should be saved and training stopped
+        default_root_dir=CHECKPOINT_PATH,                                   # Output paths for checkpoints
+        check_val_every_n_epoch=val_every_n_epochs,                         # How often the validation loop is run and compute metrics
+        logger=wandb_logger                                                 # Logging endpoint
+    )
 
-    # # This early stopping configuration is only valid for the fieldmap model variant
-    # early_stop_callback = EarlyStopping(monitor='val_loss', mode='min', min_delta=10, patience=5)
-
-    # trainer = L.Trainer(
-    #     max_epochs=args.max_epochs,
-    #     log_every_n_steps=3, # Low logging for testing
-    #     callbacks=[checkpoint_callback, early_stop_callback],
-    #     default_root_dir=args.checkpoint_path,
-    #     check_val_every_n_epoch=val_every_n_epochs,
-    #     logger=wandb_logger
-    # )
-
-    # trainer.fit(
-    #     model=unet3d,
-    #     train_dataloaders=data_module.train_dataloader(),
-    #     val_dataloaders=data_module.val_dataloader()
-    # )
+    # Train the model. Skrt skrt. 
+    trainer.fit(
+        model=model,
+        train_dataloaders=data_module.train_dataloader(),
+        val_dataloaders=data_module.val_dataloader()
+    )
 
     # Perform inference and evaluation of the trained model
     '''_infer_sample(

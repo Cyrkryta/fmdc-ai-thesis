@@ -1,8 +1,8 @@
+# Importing all of the dependencies
 import logging
 import os
 import tempfile
 from os.path import abspath
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -10,85 +10,109 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 import wandb
 from torch import optim
-
 import nipype.interfaces.io as nio
 from nipype.interfaces import fsl
 from nipype import SelectFiles, Node, Function, Workflow
-
 import nibabel as nib
 
-
+"""
+Function for getting the median timeframe
+"""
 def GetMedianTF(in_file):
     import nibabel as nib
     return int(nib.load(in_file).header['dim'][4] / 2)
 
-
+"""
+Function for subtracting 5 from the input value
+"""
 def SubtractFive(in_value):
     return in_value - 5
 
 
+"""
+Class:
+A 3D U-Net trained to predict a BOLD fMRI fieldmap
+"""
 class UNet3DFieldmap(pl.LightningModule):
-    """
-    A three-dimensional U-Net that is trained to predict the fieldmap of an fMRI scan rather than the undistorted scan
-    directly.
-    """
-
+    # Initialize the mode
     def __init__(self):
         super().__init__()
         self.model = UNet3D_2Module(2, 1)
 
+    # Forward layer of the mode
     def forward(self, img):
         return self.model(img)
 
+    # Training step
     def training_step(self, batch, batch_idx):
+        # Retrieve the current images and fieldmaps
         img, _, _, fieldmap, _, _ = batch
+        # Compute fieldmap estimate and loss
         out = self(img)
         loss = self.compute_loss(out, fieldmap)
-        self.log('train_loss', loss)
+        # Log and return the loss
+        self.log("train_loss", loss)
         return loss
 
+    # Validation step
     def validation_step(self, batch, batch_idx):
+        # Retrieve elemens from the batch
         img, b0_u, mask, fieldmap, affine, echo_spacing = batch
+        # Compute the fieldmap estimate and loss
         out = self(img)
         loss = self.compute_loss(out, fieldmap)
+        # Log the loss
+        self.log("val_loss", loss)
+        # Log image to W&B if true
         if batch_idx == 0:
             self._log_images(out, img, b0_u, mask, fieldmap, affine, echo_spacing)
-        self.log('val_loss', loss)
+        # Return the loss
         return loss
 
+    # Undistort b0
     def _undistort_b0(self, b0_d, fieldmap, affine_b0d, affine_fieldmap, echo_spacing):
+        # Create a temporary directory
         with tempfile.TemporaryDirectory() as directory:
+            # Move distorted volume to CPU, detach, and convert to a numpy array (repeated 10 times?)
             b0_d = np.transpose(b0_d.cpu().detach().numpy(), axes=(1, 2, 0))
             b0_d = np.repeat(b0_d[:, :, :, None], 10, axis=3)
+            # Converting numby array to an nifti image
             b0_d_image = nib.Nifti1Image(b0_d, affine_b0d)
+            # Save the distorted file
             nib.save(b0_d_image, os.path.join(directory, 'b0_d.nii.gz'))
+            # Detach the fieldmap, convert to numpy (only the first)
             fieldmap = fieldmap.cpu().detach().numpy()[0]
+            # Transpose and save the fieldmap image
             fieldmap = np.transpose(fieldmap, axes=(1, 2, 0))
             fieldmap_image = nib.Nifti1Image(fieldmap, affine_fieldmap)
             nib.save(fieldmap_image, os.path.join(directory, 'field_map.nii.gz'))
 
+            # Create necessary nodes for undistortion. 
             in_b0d = Node(SelectFiles({"out_file": abspath(os.path.join(directory, 'b0_d.nii.gz'))}), name="in_b0d")
             in_fieldmap = Node(SelectFiles({"out_file": abspath(os.path.join(directory, 'field_map.nii.gz'))}), name="in_fieldmap")
             out_b0_u = Node(nio.ExportFile(out_file=abspath(os.path.join(directory, "b0_u.nii.gz")), clobber=True), name="out_b0_u")
-
             fugue_correction = Node(fsl.FUGUE(dwell_time=echo_spacing, smooth3d=3, unwarp_direction="y-"), name="fugue_correction")
 
+            # Perform the fugue correction
             workflow = Workflow(name="undistort_subject")
-
             workflow.connect(in_b0d, "out_file", fugue_correction, "in_file")
             workflow.connect(in_fieldmap, "out_file", fugue_correction, "fmap_in_file")
             workflow.connect(fugue_correction, "unwarped_file", out_b0_u, "in_file")
-
             workflow.run()
 
+            # Load the undistorted file from the temporary directory
             out = nib.load(os.path.join(directory, 'b0_u.nii.gz')).get_fdata()
 
+        # Return the undistorted file
         return out
 
+    # Logging images
     def _log_images(self, out, img, b0_u, mask, fieldmap, affine, echo_spacing):
+        # Pick a smple and slice
         sample_idx = 0
         slice_idx = 18
 
+        # Retriieve the sampled images
         t1 = img[sample_idx][1][slice_idx]
         b0_d = img[sample_idx][0][slice_idx]
         b0_u = b0_u[sample_idx][0][slice_idx]
@@ -96,6 +120,7 @@ class UNet3DFieldmap(pl.LightningModule):
         affine = affine[sample_idx]
         echo_spacing = echo_spacing[sample_idx]
 
+        # Log the sample images to wandb
         wandb.log({
             'epoch': self.current_epoch,
             't1': wandb.Image(t1, caption="T1w"),
@@ -105,20 +130,26 @@ class UNet3DFieldmap(pl.LightningModule):
             'out': wandb.Image(out[sample_idx][0][slice_idx], caption="Model Output Fieldmap")
         })
 
+    # Function for defining and computing the loss function
     def compute_loss(self, out, fieldmap):
         return F.mse_loss(out, fieldmap)
 
+    # Configuration of the optimizer
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=1e-4, betas=(0.9, 0.999), weight_decay=1e-5)
         return optimizer
 
 
+"""
+Class:
+Definition of 3D convolutional block
+"""
 class conv3D_block(nn.Module):
-
     def __init__(self, in_ch, out_ch):
-
+        # Call super
         super(conv3D_block, self).__init__()
-
+        
+        # Pytorch sequential layer containg conv layer, batch normalization and relu
         self.conv3D = nn.Sequential(
             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
             nn.InstanceNorm3d(out_ch),
@@ -127,17 +158,21 @@ class conv3D_block(nn.Module):
             nn.InstanceNorm3d(out_ch),
             nn.ReLU(inplace=True)
         )
-
+    
+    # Create the forward layer
     def forward(self, x):
         x = self.conv3D(x)
         return x
 
+"""
+Class:
+Definition of 3D up-convolutional block
+"""
 class up_conv3D_block(nn.Module):
-
     def __init__(self, in_ch, out_ch, scale_tuple):
-
+        # Call super
         super(up_conv3D_block, self).__init__()
-
+        # Pytorch sequential layer for upsampling from bottlenech
         self.up_conv3D = nn.Sequential(
             nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
@@ -148,17 +183,24 @@ class up_conv3D_block(nn.Module):
             nn.ReLU(inplace=True)
         )
 
+    # Create the forward layer
     def forward(self, x):
         x = self.up_conv3D(x)
         return x
 
-
+"""
+Class:
+Define the full model
+"""
 class UNet3D_2Module(nn.Module):
     def __init__(self, n_in, n_out):
+        # Call super
         super(UNet3D_2Module, self).__init__()
 
+        # Define the various filters
         filters_3D = [16, 16 * 2, 16 * 4, 16 * 8, 16 * 16, 16 * 16]  # = [16, 32, 64, 128, 256, 512]
 
+        # Convolutional layers
         self.Conv3D_1 = conv3D_block(n_in, filters_3D[0])
         self.Conv3D_2 = conv3D_block(filters_3D[0], filters_3D[1])
         self.Conv3D_3 = conv3D_block(filters_3D[1], filters_3D[2])
@@ -166,21 +208,24 @@ class UNet3D_2Module(nn.Module):
         self.Conv3D_5 = conv3D_block(filters_3D[3], filters_3D[4])
         self.Conv3D_6 = conv3D_block(filters_3D[4], filters_3D[5])
 
+        # Define pooling layers
         self.MaxPool3D_1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
         self.MaxPool3D_2 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
         self.MaxPool3D_3 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
         self.MaxPool3D_4 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
         self.MaxPool3D_5 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
 
+        # Define up-convolutional layers
         self.up_Conv3D_1 = up_conv3D_block(filters_3D[5], filters_3D[4], (1, 2, 2))
         self.up_Conv3D_2 = up_conv3D_block(filters_3D[4] + filters_3D[4], filters_3D[3], (1, 2, 2))
         self.up_Conv3D_3 = up_conv3D_block(filters_3D[3] + filters_3D[3], filters_3D[2], (2, 2, 2))
         self.up_Conv3D_4 = up_conv3D_block(filters_3D[2] + filters_3D[2], filters_3D[1], (2, 2, 2))
         self.up_Conv3D_5 = up_conv3D_block(filters_3D[1] + filters_3D[1], filters_3D[0], (1, 2, 2))
 
+        # Define the final convolutional layer (output layer)
         self.Conv3D_final = nn.Conv3d(filters_3D[0] + filters_3D[0], n_out, kernel_size=1, stride=1, padding=0)
 
-
+    # Define the forward layer
     def forward(self, e_SA):
         # SA network's encoder
         e_SA_1 = self.Conv3D_1(e_SA)
@@ -231,7 +276,9 @@ class UNet3D_2Module(nn.Module):
         # print("D10:", d_SA.shape)
         d_SA = self.Conv3D_final(d_SA)
         # print("D11:", d_SA.shape)
-
+        
+        # Delete the encoding layers
         del (e_SA_1, e_SA_2, e_SA_3, e_SA_4, e_SA_5)
 
+        # Return the last decoding layer (output layer)
         return d_SA
