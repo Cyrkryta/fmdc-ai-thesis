@@ -123,53 +123,58 @@ if __name__ == '__main__':
 
     # Initialize the data module and 3D unet model
     data_module = FMRIDataModule(TRAIN_DATASET_PATHS=TRAINING_DATASET_PATHS, BATCH_SIZE=batch_size, device=device, TEST_DATASET_PATHS=TEST_DATASET_PATHS)
-    model = UNet3DFieldmap()
+
+    # Testing the loaders
+    train_dataloader = data_module.train_dataloader()
+    sample_batch = next(iter(train_dataloader))
     
-    # Connect to weights and biases
-    wandb.init(project='field-map-ai')
-    wandb_logger = WandbLogger(project='field-map-ai')
 
-    # trianing variables
-    checkpoint_prefix = f"{wandb.run.id}_"
-    # every_n_epochs = 10
-    every_n_epochs = 100
-    # val_every_n_epochs = 10
-    val_every_n_epochs = 100
-    # log_every_n_steps = 10
-    log_every_n_steps = 100
+    # model = UNet3DFieldmap()
+    
+    # # Connect to weights and biases
+    # wandb.init(project='field-map-ai')
+    # wandb_logger = WandbLogger(project='field-map-ai')
 
-    # Define the checkpoint callbacks
-    checkpoint_callback = ModelCheckpoint(
-        dirpath=CHECKPOINT_PATH,                                            # Output path for checkpoints
-        filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}",  # Checkpoint filename structure
-        every_n_epochs=every_n_epochs,                                      # How often should a checkpoint be saved
-        save_top_k=1,                                                       # Only save the best ckpt (override if better)
-        monitor='val_loss',                                                 # Monitors val_loss: lower the better
-        save_last=True                                                      # Always save the last model
-    )
+    # # trianing variables
+    # checkpoint_prefix = f"{wandb.run.id}_"
+    # # every_n_epochs = 10
+    # every_n_epochs = 100
+    # # val_every_n_epochs = 10
+    # val_every_n_epochs = 100
+    # # log_every_n_steps = 10
+    # log_every_n_steps = 100
 
-    # Set up early stopping 
-    early_stop_callback = EarlyStopping(monitor='val_loss', mode='min', min_delta=10, patience=5)
+    # # Define the checkpoint callbacks
+    # checkpoint_callback = ModelCheckpoint(
+    #     dirpath=CHECKPOINT_PATH,                                            # Output path for checkpoints
+    #     filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}",  # Checkpoint filename structure
+    #     every_n_epochs=every_n_epochs,                                      # How often should a checkpoint be saved
+    #     save_top_k=1,                                                       # Only save the best ckpt (override if better)
+    #     monitor='val_loss',                                                 # Monitors val_loss: lower the better
+    #     save_last=True                                                      # Always save the last model
+    # )
 
-    # Define the trainer
-    trainer = L.Trainer(
-        max_epochs=max_epochs,                                              # Max number of allowed epochs
-        log_every_n_steps=log_every_n_steps,                                # How often is the training loss computed and logged
-        callbacks=[checkpoint_callback, early_stop_callback],               # Callback to determine if a model should be saved and training stopped
-        default_root_dir=CHECKPOINT_PATH,                                   # Output paths for checkpoints
-        check_val_every_n_epoch=val_every_n_epochs,                         # How often the validation loop is run and compute metrics
-        logger=wandb_logger                                                 # Logging endpoint
-    )
+    # # Set up early stopping 
+    # early_stop_callback = EarlyStopping(monitor='val_loss', mode='min', min_delta=10, patience=5)
 
-    print("Wow, I reached the end right before training.")
+    # # Define the trainer
+    # trainer = L.Trainer(
+    #     max_epochs=max_epochs,                                              # Max number of allowed epochs
+    #     log_every_n_steps=log_every_n_steps,                                # How often is the training loss computed and logged
+    #     callbacks=[checkpoint_callback, early_stop_callback],               # Callback to determine if a model should be saved and training stopped
+    #     default_root_dir=CHECKPOINT_PATH,                                   # Output paths for checkpoints
+    #     check_val_every_n_epoch=val_every_n_epochs,                         # How often the validation loop is run and compute metrics
+    #     logger=wandb_logger                                                 # Logging endpoint
+    # )
 
+    # print("Wow, I reached the end right before training.")
 
-    # Train the model. Skrt skrt. 
-    trainer.fit(
-        model=model,
-        train_dataloaders=data_module.train_dataloader(),
-        val_dataloaders=data_module.val_dataloader()
-    )
+    # # Train the model. Skrt skrt. 
+    # trainer.fit(
+    #     model=model,
+    #     train_dataloaders=data_module.train_dataloader(),
+    #     val_dataloaders=data_module.val_dataloader()
+    # )
 """
     # Perform inference and evaluation of the trained model
     '''_infer_sample(

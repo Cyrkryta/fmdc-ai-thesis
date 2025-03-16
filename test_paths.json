@@ -1,6 +1,6 @@
 {
     "test_paths": [
-        "/home/mlc/dev/fmdc/downloads/datasets/test-processed/ds001454/sub-01",
-        "/home/mlc/dev/fmdc/downloads/datasets/test-processed/ds001454/sub-02"
+        "/student/magnuschristensen/dev/fmdc/downloads/processed-datasets/test-processed/ds001454/sub-01",
+        "/student/magnuschristensen/dev/fmdc/downloads/processed-datasets/test-processed/ds001454/sub-02"
     ]
 }

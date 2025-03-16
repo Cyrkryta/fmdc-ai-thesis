@@ -1,13 +1,15 @@
+# Importing all of the dependencies
 import json
 import os
 from pathlib import Path
-
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from project.data import data_util
 
-
+"""
+Function for collecting all the subjects in the datasets
+"""
 def collect_all_subject_paths(dataset_paths):
     subject_paths = []
 
@@ -19,7 +21,9 @@ def collect_all_subject_paths(dataset_paths):
 
     return subject_paths
 
-
+"""
+Function for retrieving a particular subject data from a path
+"""
 def load_data_from_path(subject_path):
     # Get paths
     t1_path = os.path.join(subject_path, 'T1w.nii.gz')
@@ -61,7 +65,7 @@ def load_data_from_path(subject_path):
 
     number_timesteps = img_b0_d.shape[3]
 
-    # Repeat T1 image if we only have one
+    # Repeat T1 image if we only have one to mach the number of timesteps for training
     if len(img_t1.shape) == 3:
         img_t1 = np.repeat(img_t1[None, :], number_timesteps, axis=0)
         img_t1 = np.transpose(img_t1, axes=(1, 2, 3, 0))
