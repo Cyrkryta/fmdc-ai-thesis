@@ -44,5 +44,12 @@ To convert data to a suitable format for the model, the `prepare_data.py` file s
 Make sure to have `FSL` installed, and run the command
 
 ```
-python prepare_data.py --FSL_DIR /path/to/fsl --SOURCE_DATASET_ROOT_DIR /path/to/retrieved/data/files/directory --DEST_DATASET_ROOT_DIR /path/to/processed/output/directory --JSON_PROCESSING_CONFIG_PATH /path/to/new/json/config/file
+python prepare_data.py --FSL_DIR /path/to/fsl/root --SOURCE_DATASET_ROOT_DIR /path/to/retrieved/data/files/directory --DEST_DATASET_ROOT_DIR /path/to/processed/output/directory --JSON_PROCESSING_CONFIG_PATH /path/to/new/json/config/file
+```
+
+#### Training
+Before training, it is important that you have the preprocessed data for it to work as intended. There are two ways of constructing the trian, validation and test data. `1.` Only add a training dataset. It will then be split 70/10/20. `2.` Add a training dataset and testing dataset, which will use the test dataset for testing and split the training data for train and validation (80/20). Run the following command to train a model
+
+```
+python project/training.py --TRAINING_DATASET_PATH "/path/to/processed/training/data/ds*" -- TEST_DATASET_PATH "/path/to/processed/test/data/ds*" --CHECKPOINT_PATH /path/to/checkpoint/folder --max-epochs 100000 --batch_size 32
 ```
