@@ -45,29 +45,67 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Training step
     def training_step(self, batch, batch_idx):
-        # Retrieve the current images and fieldmaps
-        img, _, _, fieldmap, _, _ = batch
-        # Compute fieldmap estimate and loss
+        # Retrieve the img and batch
+        img = batch["img_data"]
+        fieldmap = batch["fieldmap"]
+
+        # Compute fieldmap
         out = self(img)
-        loss = self.compute_loss(out, fieldmap)
+
+        # Compute the training loss
+        train_loss = self.compute_loss(out, fieldmap)
+
+        # Log the loss
+        self.log("train_loss", train_loss)
+
+        # Return the loss
+        return train_loss
+        # # Retrieve the current images and fieldmaps
+        # img, _, _, fieldmap, _, _ = batch
+        # Compute fieldmap estimate and loss
+        # out = self(img)
+        # loss = self.compute_loss(out, fieldmap)
         # Log and return the loss
-        self.log("train_loss", loss)
-        return loss
+        # self.log("train_loss", loss)
+        # return loss
 
     # Validation step
     def validation_step(self, batch, batch_idx):
         # Retrieve elemens from the batch
-        img, b0_u, mask, fieldmap, affine, echo_spacing = batch
-        # Compute the fieldmap estimate and loss
+        img = batch["img_data"]
+        b0_u = batch["b0_u"]
+        mask = batch["mask"]
+        fieldmap = batch["fieldmap"]
+        affine = batch["affine"]
+        echo_spacing = batch["echo_spacing"]
+
+        # Compute the fieldmap estimate
         out = self(img)
-        loss = self.compute_loss(out, fieldmap)
-        # Log the loss
-        self.log("val_loss", loss)
-        # Log image to W&B if true
+        
+        # Compute the loss
+        val_loss = self.compute_loss(out, fieldmap)
+
+        # Log the validation loss
+        self.log("val_loss", val_loss)
+
+        # Log first sample images in each batch to W&B
         if batch_idx == 0:
             self._log_images(out, img, b0_u, mask, fieldmap, affine, echo_spacing)
+
         # Return the loss
-        return loss
+        return val_loss
+
+        # img, b0_u, mask, fieldmap, affine, echo_spacing = batch
+        # Compute the fieldmap estimate and loss
+        # out = self(img)
+        # loss = self.compute_loss(out, fieldmap)
+        # Log the loss
+        # self.log("val_loss", loss)
+        # Log image to W&B if true
+        # if batch_idx == 0:
+            # self._log_images(out, img, b0_u, mask, fieldmap, affine, echo_spacing)
+        # Return the loss
+        # return loss
 
     # Undistort b0
     def _undistort_b0(self, b0_d, fieldmap, affine_b0d, affine_fieldmap, echo_spacing):

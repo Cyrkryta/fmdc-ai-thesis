@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch
 import volumentations
 from torch.utils.data import DataLoader, Dataset
+from torch.nn.functional import pad
 import json
 from data import fmri_data_util
 from data import augmentations
@@ -21,6 +22,104 @@ def save_to_json(TRAIN_PATHS, VAL_PATHS, TEST_PATHS):
     with open("test_paths.json", "w") as f:
         json.dump({"test_paths": TEST_PATHS}, f, indent=4)
     print("JSON files for train, validation and test has been saved...")
+
+"""
+Function for padding the tensors to the desired size
+"""
+def perform_padding(tensor, target_size):
+    # Retrieve the current and target dimensions
+    # Ignoring the channels dimension
+    current_x, current_y, current_z = tensor.shape[-3:]
+    target_x, target_y, target_z = target_size
+
+    # Calculate padding need
+    padding_x = target_x - current_x
+    padding_y = target_y - current_y
+    padding_z = target_z - current_z
+
+    # Calculate symmetric padding for x, y, z
+    x_padding_left = padding_x // 2
+    x_padding_right = padding_x - x_padding_left
+    y_padding_left = padding_y // 2
+    y_padding_right = padding_y - y_padding_left
+    z_padding_left = padding_z // 2
+    z_padding_right = padding_z - z_padding_left
+
+    # Create the padding tuple (reversed order)
+    # padding_tuple = (
+    #     z_padding_left, z_padding_right,
+    #     y_padding_left, y_padding_right,
+    #     x_padding_left, x_padding_right
+    # )
+    padding_tuple = (
+        x_padding_left, x_padding_right,
+        y_padding_left, y_padding_right,
+        z_padding_left, z_padding_right
+    )
+
+    # Perform and return the padded tensor
+    # Padding value -1 as this is our normalized background
+    padded_tensor = pad(input=tensor, pad=padding_tuple, mode="constant", value=-100)
+    return padded_tensor
+
+"""
+Custom collate function for padding the batches (input and output)
+Input shape: []
+"""
+def collate_fn(batch):
+    # Calculate max of individual dimensions
+    # Assuming target shape is the same as input shape
+    max_x = max(sample[0].shape[0] for sample in batch)
+    max_y = max(sample[0].shape[1] for sample in batch)
+    max_z = max(sample[0].shape[2] for sample in batch)
+    target_size = (max_x, max_y, max_z)
+
+    # Placeholder for the padded batch
+    padded_batch = []
+
+    # Go through each sample
+    for sample in batch:
+        # Unpacking the sample
+        img_data, b0_u, mask, fieldmap, affine, echo_spacing, b0alltf_d, b0alltf_u = sample
+
+        # Pad the data
+        padded_img_data = perform_padding(img_data, target_size)
+        padded_fieldmap = perform_padding(fieldmap, target_size)
+
+        # Create and append the padded sample
+        new_padded_sample = (padded_img_data, b0_u, mask, padded_fieldmap, affine, echo_spacing, b0alltf_d, b0alltf_u)
+        padded_batch.append(new_padded_sample)
+
+        # Define a stacked dictionary
+        keys = ["img_data", "b0_u", "mask", "fieldmap", "affine", "echo_spacing", "b0alltf_d", "b0alltf_u"]
+        # Collated placeholder
+        collated = {}
+        # Handle None cases
+        collated = {
+            key: torch.stack(
+                [sample[i] if sample [i] is not None else torch.tensor([-1], dtype=torch.float32) for sample in padded_batch]
+            ) for i, key in enumerate(keys)
+        }
+
+        # Return the new collate
+        return collated
+
+    # # unpack
+    # padded_inputs = []
+    # padded_targets = []
+
+    # # Pad inputs and outputs in the batch
+    # for sample in batch:
+    #     # Create padded tensors
+    #     padded_input = perform_padding(input, target_size)
+    #     padded_target = perform_padding(target, target_size)
+    #     # Append padded tensors
+    #     padded_inputs.append(padded_input)
+    #     padded_targets.append(padded_target)
+
+    # # Stack and return the inputs and targets
+    # stacked_padded_inputs, stacked_padded_targets = torch.stack(padded_inputs), torch.stack(padded_targets)
+    # return stacked_padded_inputs, stacked_padded_targets
 
 """
 Class for creating the data as intended
@@ -116,23 +215,28 @@ class FMRIDataset(Dataset):
         img_data = torch.stack((torch.from_numpy(transformed_data['b0_d']).float().to(self.device), torch.from_numpy(transformed_data['t1']).float().to(self.device)))
 
         # Create the output
-        output = (
-            img_data,
-            torch.from_numpy(transformed_data['b0_u']).float().to(self.device),
-            torch.from_numpy(transformed_data['mask']).bool().to(self.device),
-            torch.from_numpy(transformed_data['fieldmap']).float().to(self.device),
-            torch.from_numpy(self.affine[idx]).float().to(self.device),
-            torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device)
-        )      
-
-        # Optionally, include the extra test files if they exist
         if 'b0alltf_d' in transformed_data and 'b0alltf_u' in transformed_data:
-            extra = (
+            output = (
+                img_data,
+                torch.from_numpy(transformed_data['b0_u']).float().to(self.device),
+                torch.from_numpy(transformed_data['mask']).bool().to(self.device),
+                torch.from_numpy(transformed_data['fieldmap']).float().to(self.device),
+                torch.from_numpy(self.affine[idx]).float().to(self.device),
+                torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device),
                 torch.from_numpy(transformed_data['b0alltf_d']).float().to(self.device),
                 torch.from_numpy(transformed_data['b0alltf_u']).float().to(self.device)
+            )      
+        else:
+            output = (
+                img_data,
+                torch.from_numpy(transformed_data['b0_u']).float().to(self.device),
+                torch.from_numpy(transformed_data['mask']).bool().to(self.device),
+                torch.from_numpy(transformed_data['fieldmap']).float().to(self.device),
+                torch.from_numpy(self.affine[idx]).float().to(self.device),
+                torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device),
+                None,
+                None
             )
-            # Return the combined output
-            return output + extra  
 
         # Return the single output
         return output
@@ -243,10 +347,10 @@ class FMRIDataModule(pl.LightningDataModule):
 
     # Set up the dataloaders
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=2, shuffle=True, persistent_workers=True)
+        return DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=2, shuffle=True, collate_fn=collate_fn, persistent_workers=True)
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=1, shuffle=False, persistent_workers=True)
+        return DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=1, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.BATCH_SIZE, num_workers=0, shuffle=False, persistent_workers=True)
+        return DataLoader(self.test_dataset, batch_size=self.BATCH_SIZE, num_workers=0, shuffle=False, collate_fn=collate_fn, persistent_workers=True)

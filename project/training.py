@@ -124,10 +124,25 @@ if __name__ == '__main__':
     # Initialize the data module and 3D unet model
     data_module = FMRIDataModule(TRAIN_DATASET_PATHS=TRAINING_DATASET_PATHS, BATCH_SIZE=batch_size, device=device, TEST_DATASET_PATHS=TEST_DATASET_PATHS)
 
+    #################### TESTING START ###############
     # Testing the loaders
     train_dataloader = data_module.train_dataloader()
     sample_batch = next(iter(train_dataloader))
-    
+
+    # Inspecting the batch
+    print(f"\nKeys in the batch: {sample_batch.keys()}")
+    img_data = sample_batch["img_data"]
+    img_data_batch = img_data[0]
+    t1 = img_data_batch[0]
+    b0 = img_data_batch[1]
+    print(f"Img data T1w: value shape={t1.shape}, type={type(t1)}")
+    print(f"Img data b0d: value shape={b0.shape}, type={type(b0)}")
+    for key, val in sample_batch.items():
+        print(f"{key}: value shape={val.shape}, type={type(val)}")
+
+    ################### TESTING END ##################
+
+    print(f"Reached the end right before instantiating the model")
 
     # model = UNet3DFieldmap()
     
