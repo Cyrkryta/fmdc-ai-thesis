@@ -9,10 +9,10 @@ import wandb
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from tqdm import tqdm
-from data.fmri_dataset import FMRIDataModule
+from project.data.fmri_dataset import FMRIDataModule, FMRIDataset
 from models.unet3d_fieldmap import UNet3DFieldmap
 import inference
-from data.dataloader import create_dataloaders
+from project.data.dataloader import create_dataloaders
 from metrics.metrics import TemporalCorrelation
 
 """

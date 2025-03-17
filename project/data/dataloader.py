@@ -136,7 +136,7 @@ def create_dataloaders(batch_size: int):
     print(f"\nCreating dataloaders...")
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=2, shuffle=True, collate_fn=collate_fn, persistent_workers=True)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, num_workers=1, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, num_workers=1, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
     print(f"Dataloaders created... returning...")
 
     # Returning
