@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.nn.functional import pad
 import json
 from data import fmri_data_util
+from data import data_util
 from data import augmentations
 
 """
@@ -29,7 +30,7 @@ Function for padding the tensors to the desired size
 def perform_padding(tensor, target_size):
     # Retrieve the current and target dimensions
     # Ignoring the channels dimension
-    current_x, current_y, current_z = tensor.shape[-3:]
+    _, current_x, current_y, current_z = tensor.shape
     target_x, target_y, target_z = target_size
 
     # Calculate padding need
@@ -46,16 +47,17 @@ def perform_padding(tensor, target_size):
     z_padding_right = padding_z - z_padding_left
 
     # Create the padding tuple (reversed order)
-    # padding_tuple = (
-    #     z_padding_left, z_padding_right,
-    #     y_padding_left, y_padding_right,
-    #     x_padding_left, x_padding_right
-    # )
     padding_tuple = (
         x_padding_left, x_padding_right,
         y_padding_left, y_padding_right,
         z_padding_left, z_padding_right
     )
+
+    # padding_tuple = (
+    #     z_padding_left, z_padding_right,
+    #     y_padding_left, y_padding_right,
+    #     x_padding_left, x_padding_right
+    # )
 
     # Perform and return the padded tensor
     # Padding value -1 as this is our normalized background
@@ -69,9 +71,14 @@ Input shape: []
 def collate_fn(batch):
     # Calculate max of individual dimensions
     # Assuming target shape is the same as input shape
-    max_x = max(sample[0].shape[0] for sample in batch)
-    max_y = max(sample[0].shape[1] for sample in batch)
-    max_z = max(sample[0].shape[2] for sample in batch)
+    max_x = max(sample[0][0].shape[0] for sample in batch)
+    max_y = max(sample[0][0].shape[1] for sample in batch)
+    max_z = max(sample[0][0].shape[2] for sample in batch)
+
+    print(f"Max X Dimension: {max_x}")
+    print(f"Max Y Dimension: {max_y}")
+    print(f"Max Z Dimension: {max_z}")
+
     target_size = (max_x, max_y, max_z)
 
     # Placeholder for the padded batch
@@ -80,29 +87,65 @@ def collate_fn(batch):
     # Go through each sample
     for sample in batch:
         # Unpacking the sample
-        img_data, b0_u, mask, fieldmap, affine, echo_spacing, b0alltf_d, b0alltf_u = sample
+        img_data, b0_u, mask, fieldmap, b0u_affine, b0d_affine, fieldmap_affine, echo_spacing, b0alltf_d, b0alltf_u = sample
+
+        # Retrieve the distorted EPI image and fieldmap image
+        b0u_img = b0_u[0]
+        fieldmap_img = fieldmap[0]
+
+        # Check if the fieldmap and distorted epi image has similar dimensions
+        if fieldmap_img.shape != b0u_img.shape:
+            # If the shapes doesn't fit, resample fieldmap to epi space
+            # Retrieve the nifti images
+            b0u_nifti = data_util.get_nifti_image(b0u_img, b0u_affine)
+            fieldmap_nifti = data_util.get_nifti_image(fieldmap_img, fieldmap_affine)
+
+            # Resample the fieldmap image
+            fieldmap_nifti_resampled = data_util.resample_image(fieldmap_nifti, b0u_nifti.affine, b0u_nifti.shape, "linear")
+
+            # Get Resampled image data again
+            fieldmap_nifti_resampled_data = fieldmap_nifti_resampled.get_fdata()
+            fieldmap_resampled_img = torch.tensor(fieldmap_nifti_resampled_data, dtype=torch.float32).unsqueeze(0)
+        else:
+            fieldmap_resampled_img = fieldmap
+
+            # print(f"\nb0d_img shape: {b0d_img.shape}")
+            # print(f"fieldmap img shape: {fieldmap_img.shape}")
+            # print(f"fieldmap resampled img shape: {fieldmap_resampled_img.shape}")
 
         # Pad the data
         padded_img_data = perform_padding(img_data, target_size)
-        padded_fieldmap = perform_padding(fieldmap, target_size)
+        padded_b0_u = perform_padding(b0_u, target_size)
+        padded_mask = perform_padding(mask, target_size)
+        padded_fieldmap = perform_padding(fieldmap_resampled_img, target_size)
+        # padded_img_data = img_data
+        # padded_b0_u = b0_u
+        # padded_mask = mask
+        # padded_fieldmap = fieldmap_resampled_img
+
+        # print(f"\nimg_data shape: {padded_img_data.shape}")
+        # print(f"b0_u shape: {padded_b0_u.shape}")
+        # print(f"mask shape: {padded_mask.shape}")
+        # print(f"fieldmap shape: {padded_fieldmap.shape}")
 
         # Create and append the padded sample
-        new_padded_sample = (padded_img_data, b0_u, mask, padded_fieldmap, affine, echo_spacing, b0alltf_d, b0alltf_u)
+        # new_padded_sample = (padded_img_data, b0_u, mask, padded_fieldmap, affine, echo_spacing, b0alltf_d, b0alltf_u)
+        new_padded_sample = (padded_img_data, padded_b0_u, padded_mask, padded_fieldmap, b0u_affine, b0d_affine, fieldmap_affine, echo_spacing, b0alltf_d, b0alltf_u)
         padded_batch.append(new_padded_sample)
 
-        # Define a stacked dictionary
-        keys = ["img_data", "b0_u", "mask", "fieldmap", "affine", "echo_spacing", "b0alltf_d", "b0alltf_u"]
-        # Collated placeholder
-        collated = {}
-        # Handle None cases
-        collated = {
-            key: torch.stack(
-                [sample[i] if sample [i] is not None else torch.tensor([-1], dtype=torch.float32) for sample in padded_batch]
-            ) for i, key in enumerate(keys)
-        }
+    # Define a stacked dictionary
+    keys = ["img_data", "b0_u", "mask", "fieldmap", "affine", "echo_spacing", "b0alltf_d", "b0alltf_u"]
+    # Collated placeholder
+    collated = {}
+    # Handle None cases
+    collated = {
+        key: torch.stack(
+            [sample[i] if sample [i] is not None else torch.tensor([-1], dtype=torch.float32) for sample in padded_batch]
+        ) for i, key in enumerate(keys)
+    }
 
-        # Return the new collate
-        return collated
+    # # Return the new collate
+    return collated
 
     # # unpack
     # padded_inputs = []
@@ -143,7 +186,9 @@ class FMRIDataset(Dataset):
         self.img_b0_u = []
         self.img_mask = []
         self.img_fieldmap = []
-        self.affine = []
+        self.b0u_affine = []
+        self.b0d_affine = []
+        self.fieldmap_affine = []
         self.echo_spacing = []
         self.img_b0_d_alltf = [] # Remains empty if fulltf not provided
         self.img_b0_u_alltf = [] # Remains empty if fulltf not provided
@@ -151,9 +196,7 @@ class FMRIDataset(Dataset):
         # Go through each subject in the paths
         for SUBJECT_PATH in SUBJECT_PATHS:
             # Retrieve the tuple
-            img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, b0u_affine, _, echo_spacing, img_b0alltf_d, img_b0alltf_u = fmri_data_util.load_data_from_path(SUBJECT_PATH)
-            # Retrieve the images
-            # img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, b0u_affine, _, echo_spacing = fmri_data_util.load_data_from_path(SUBJECT_PATH)
+            img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, b0u_affine, b0d_affine, fieldmap_affine, echo_spacing, img_b0alltf_d, img_b0alltf_u = fmri_data_util.load_data_from_path(SUBJECT_PATH)
 
             # Split images on temporal access into corresponding independent samples
             if split_temporally:
@@ -162,7 +205,9 @@ class FMRIDataset(Dataset):
                 self.img_b0_u.extend(list(img_b0_u))
                 self.img_mask.extend(list(img_mask))
                 self.img_fieldmap.extend(list(img_fieldmap))
-                self.affine.extend(list(b0u_affine))
+                self.b0u_affine.extend(list(b0u_affine))
+                self.b0d_affine.extend(list(b0d_affine))
+                self.fieldmap_affine.extend(list(fieldmap_affine))
                 self.echo_spacing.extend(list(echo_spacing))
 
                 # Append extra test files only if they exist
@@ -179,7 +224,9 @@ class FMRIDataset(Dataset):
                 self.img_b0_u.append(img_b0_u)
                 self.img_mask.append(img_mask)
                 self.img_fieldmap.append(img_fieldmap)
-                self.affine.append(b0u_affine)
+                self.b0u_affine.extend(b0u_affine)
+                self.b0d_affine.extend(b0d_affine)
+                self.fieldmap_affine.extend(fieldmap_affine)
                 self.echo_spacing.append(echo_spacing)
 
                 if img_b0alltf_d is not None and img_b0alltf_u is not None:
@@ -221,7 +268,9 @@ class FMRIDataset(Dataset):
                 torch.from_numpy(transformed_data['b0_u']).float().to(self.device),
                 torch.from_numpy(transformed_data['mask']).bool().to(self.device),
                 torch.from_numpy(transformed_data['fieldmap']).float().to(self.device),
-                torch.from_numpy(self.affine[idx]).float().to(self.device),
+                torch.from_numpy(self.b0u_affine[idx]).float().to(self.device),
+                torch.from_numpy(self.b0d_affine[idx]).float().to(self.device),
+                torch.from_numpy(self.fieldmap_affine[idx]).float().to(self.device),
                 torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device),
                 torch.from_numpy(transformed_data['b0alltf_d']).float().to(self.device),
                 torch.from_numpy(transformed_data['b0alltf_u']).float().to(self.device)
@@ -232,7 +281,9 @@ class FMRIDataset(Dataset):
                 torch.from_numpy(transformed_data['b0_u']).float().to(self.device),
                 torch.from_numpy(transformed_data['mask']).bool().to(self.device),
                 torch.from_numpy(transformed_data['fieldmap']).float().to(self.device),
-                torch.from_numpy(self.affine[idx]).float().to(self.device),
+                torch.from_numpy(self.b0u_affine[idx]).float().to(self.device),
+                torch.from_numpy(self.b0d_affine[idx]).float().to(self.device),
+                torch.from_numpy(self.fieldmap_affine[idx]).float().to(self.device),
                 torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device),
                 None,
                 None

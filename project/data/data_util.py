@@ -1,7 +1,15 @@
 import numpy as np
 import nibabel as nib
 import scipy.ndimage
+from nilearn.image import resample_img
 
+def get_nifti_image(obj, obj_affine):
+    nifti_img = nib.Nifti1Image(obj.detach().cpu().numpy(), obj_affine)
+    return nifti_img  
+
+def resample_image(source_nifti, target_affine, target_shape, interpolation="linear"):
+    resampled_image = resample_img(source_nifti, target_affine, target_shape, interpolation, force_resample=True, copy_header=True)
+    return resampled_image
 
 def normalize_img(img, max_img, min_img, max, min):
     # Scale between [1 0]

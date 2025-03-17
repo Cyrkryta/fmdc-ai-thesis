@@ -47,6 +47,8 @@ def load_data_from_path(subject_path):
     img_b0_u = data_util.get_nii_img(b0_u_path)
     img_mask = data_util.get_nii_img(mask_path)
     img_fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0]
+    img_fieldmap_affine = data_util.load_only_nii(fieldmap_path).affine
+    img_b0_d_affine = data_util.load_only_nii(b0_d_path).affine
 
     # Check if the test files exists and act accordingly
     if os.path.exists(b0alltf_d_path) and os.path.exists(b0alltf_u_path):
@@ -113,6 +115,9 @@ def load_data_from_path(subject_path):
     b0u_affine = nib.load(b0_u_path).affine
     b0u_affine = np.repeat(b0u_affine[None, :], number_timesteps, axis=0)
 
+    b0d_affine = nib.load(b0_d_path).affine
+    b0d_affine = np.repeat(b0d_affine[None, :], number_timesteps, axis=0)
+
     fieldmap_affine = nib.load(fieldmap_path).affine
     fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
 
@@ -121,5 +126,5 @@ def load_data_from_path(subject_path):
 
     # Return the loaded images along with the test images if available
     return (img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, 
-            b0u_affine, fieldmap_affine, echo_spacing,
+            b0u_affine, b0d_affine, fieldmap_affine, echo_spacing,
             img_b0alltf_d, img_b0alltf_u)

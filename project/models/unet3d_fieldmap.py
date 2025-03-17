@@ -28,7 +28,6 @@ Function for subtracting 5 from the input value
 def SubtractFive(in_value):
     return in_value - 5
 
-
 """
 Class:
 A 3D U-Net trained to predict a BOLD fMRI fieldmap
@@ -46,11 +45,11 @@ class UNet3DFieldmap(pl.LightningModule):
     # Training step
     def training_step(self, batch, batch_idx):
         # Retrieve the img and batch
-        img = batch["img_data"]
+        img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
 
         # Compute fieldmap
-        out = self(img)
+        out = self(img_data)
 
         # Compute the training loss
         train_loss = self.compute_loss(out, fieldmap)
@@ -72,7 +71,7 @@ class UNet3DFieldmap(pl.LightningModule):
     # Validation step
     def validation_step(self, batch, batch_idx):
         # Retrieve elemens from the batch
-        img = batch["img_data"]
+        img_data = batch["img_data"]
         b0_u = batch["b0_u"]
         mask = batch["mask"]
         fieldmap = batch["fieldmap"]
@@ -80,7 +79,7 @@ class UNet3DFieldmap(pl.LightningModule):
         echo_spacing = batch["echo_spacing"]
 
         # Compute the fieldmap estimate
-        out = self(img)
+        out = self(img_data)
         
         # Compute the loss
         val_loss = self.compute_loss(out, fieldmap)
@@ -90,7 +89,7 @@ class UNet3DFieldmap(pl.LightningModule):
 
         # Log first sample images in each batch to W&B
         if batch_idx == 0:
-            self._log_images(out, img, b0_u, mask, fieldmap, affine, echo_spacing)
+            self._log_images(out, img_data, b0_u, mask, fieldmap, affine, echo_spacing)
 
         # Return the loss
         return val_loss
