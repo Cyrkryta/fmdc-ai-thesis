@@ -169,7 +169,10 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Function for defining and computing the loss function
     def compute_loss(self, out, fieldmap):
-        return F.mse_loss(out, fieldmap)
+        valid_mask = (fieldmap != -100).float()
+        element_wise_loss = F.mse_loss(out, fieldmap, reduction="none")
+        loss = (element_wise_loss * valid_mask).sum() / valid_mask.sum()
+        return loss
 
     # Configuration of the optimizer
     def configure_optimizers(self):

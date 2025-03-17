@@ -8,9 +8,10 @@ import volumentations
 from torch.utils.data import DataLoader, Dataset
 from torch.nn.functional import pad
 import json
-from data import fmri_data_util
-from data import data_util
-from data import augmentations
+from project.data import fmri_data_util
+from project.data import augmentations
+import argparse
+import glob
 
 """
 Function for saving train, validation, and validation paths to json
@@ -23,146 +24,6 @@ def save_to_json(TRAIN_PATHS, VAL_PATHS, TEST_PATHS):
     with open("test_paths.json", "w") as f:
         json.dump({"test_paths": TEST_PATHS}, f, indent=4)
     print("JSON files for train, validation and test has been saved...")
-
-"""
-Function for padding the tensors to the desired size
-"""
-def perform_padding(tensor, target_size):
-    # Retrieve the current and target dimensions
-    # Ignoring the channels dimension
-    _, current_x, current_y, current_z = tensor.shape
-    target_x, target_y, target_z = target_size
-
-    # Calculate padding need
-    padding_x = target_x - current_x
-    padding_y = target_y - current_y
-    padding_z = target_z - current_z
-
-    # Calculate symmetric padding for x, y, z
-    x_padding_left = padding_x // 2
-    x_padding_right = padding_x - x_padding_left
-    y_padding_left = padding_y // 2
-    y_padding_right = padding_y - y_padding_left
-    z_padding_left = padding_z // 2
-    z_padding_right = padding_z - z_padding_left
-
-    # Create the padding tuple (reversed order)
-    padding_tuple = (
-        x_padding_left, x_padding_right,
-        y_padding_left, y_padding_right,
-        z_padding_left, z_padding_right
-    )
-
-    # padding_tuple = (
-    #     z_padding_left, z_padding_right,
-    #     y_padding_left, y_padding_right,
-    #     x_padding_left, x_padding_right
-    # )
-
-    # Perform and return the padded tensor
-    # Padding value -1 as this is our normalized background
-    padded_tensor = pad(input=tensor, pad=padding_tuple, mode="constant", value=-100)
-    return padded_tensor
-
-"""
-Custom collate function for padding the batches (input and output)
-Input shape: []
-"""
-def collate_fn(batch):
-    # Calculate max of individual dimensions
-    # Assuming target shape is the same as input shape
-    max_x = max(sample[0][0].shape[0] for sample in batch)
-    max_y = max(sample[0][0].shape[1] for sample in batch)
-    max_z = max(sample[0][0].shape[2] for sample in batch)
-
-    print(f"Max X Dimension: {max_x}")
-    print(f"Max Y Dimension: {max_y}")
-    print(f"Max Z Dimension: {max_z}")
-
-    target_size = (max_x, max_y, max_z)
-
-    # Placeholder for the padded batch
-    padded_batch = []
-
-    # Go through each sample
-    for sample in batch:
-        # Unpacking the sample
-        img_data, b0_u, mask, fieldmap, b0u_affine, b0d_affine, fieldmap_affine, echo_spacing, b0alltf_d, b0alltf_u = sample
-
-        # Retrieve the distorted EPI image and fieldmap image
-        b0u_img = b0_u[0]
-        fieldmap_img = fieldmap[0]
-
-        # Check if the fieldmap and distorted epi image has similar dimensions
-        if fieldmap_img.shape != b0u_img.shape:
-            # If the shapes doesn't fit, resample fieldmap to epi space
-            # Retrieve the nifti images
-            b0u_nifti = data_util.get_nifti_image(b0u_img, b0u_affine)
-            fieldmap_nifti = data_util.get_nifti_image(fieldmap_img, fieldmap_affine)
-
-            # Resample the fieldmap image
-            fieldmap_nifti_resampled = data_util.resample_image(fieldmap_nifti, b0u_nifti.affine, b0u_nifti.shape, "linear")
-
-            # Get Resampled image data again
-            fieldmap_nifti_resampled_data = fieldmap_nifti_resampled.get_fdata()
-            fieldmap_resampled_img = torch.tensor(fieldmap_nifti_resampled_data, dtype=torch.float32).unsqueeze(0)
-        else:
-            fieldmap_resampled_img = fieldmap
-
-            # print(f"\nb0d_img shape: {b0d_img.shape}")
-            # print(f"fieldmap img shape: {fieldmap_img.shape}")
-            # print(f"fieldmap resampled img shape: {fieldmap_resampled_img.shape}")
-
-        # Pad the data
-        padded_img_data = perform_padding(img_data, target_size)
-        padded_b0_u = perform_padding(b0_u, target_size)
-        padded_mask = perform_padding(mask, target_size)
-        padded_fieldmap = perform_padding(fieldmap_resampled_img, target_size)
-        # padded_img_data = img_data
-        # padded_b0_u = b0_u
-        # padded_mask = mask
-        # padded_fieldmap = fieldmap_resampled_img
-
-        # print(f"\nimg_data shape: {padded_img_data.shape}")
-        # print(f"b0_u shape: {padded_b0_u.shape}")
-        # print(f"mask shape: {padded_mask.shape}")
-        # print(f"fieldmap shape: {padded_fieldmap.shape}")
-
-        # Create and append the padded sample
-        # new_padded_sample = (padded_img_data, b0_u, mask, padded_fieldmap, affine, echo_spacing, b0alltf_d, b0alltf_u)
-        new_padded_sample = (padded_img_data, padded_b0_u, padded_mask, padded_fieldmap, b0u_affine, b0d_affine, fieldmap_affine, echo_spacing, b0alltf_d, b0alltf_u)
-        padded_batch.append(new_padded_sample)
-
-    # Define a stacked dictionary
-    keys = ["img_data", "b0_u", "mask", "fieldmap", "affine", "echo_spacing", "b0alltf_d", "b0alltf_u"]
-    # Collated placeholder
-    collated = {}
-    # Handle None cases
-    collated = {
-        key: torch.stack(
-            [sample[i] if sample [i] is not None else torch.tensor([-1], dtype=torch.float32) for sample in padded_batch]
-        ) for i, key in enumerate(keys)
-    }
-
-    # # Return the new collate
-    return collated
-
-    # # unpack
-    # padded_inputs = []
-    # padded_targets = []
-
-    # # Pad inputs and outputs in the batch
-    # for sample in batch:
-    #     # Create padded tensors
-    #     padded_input = perform_padding(input, target_size)
-    #     padded_target = perform_padding(target, target_size)
-    #     # Append padded tensors
-    #     padded_inputs.append(padded_input)
-    #     padded_targets.append(padded_target)
-
-    # # Stack and return the inputs and targets
-    # stacked_padded_inputs, stacked_padded_targets = torch.stack(padded_inputs), torch.stack(padded_targets)
-    # return stacked_padded_inputs, stacked_padded_targets
 
 """
 Class for creating the data as intended
@@ -296,17 +157,17 @@ Module for creating the datasets
 """
 class FMRIDataModule(pl.LightningDataModule):
     # Initialize the necessary components
-    def __init__(self, TRAIN_DATASET_PATHS, BATCH_SIZE, device, TEST_DATASET_PATHS=None):
+    def __init__(self, TRAIN_DATASET_PATHS, DATASET_SAVE_ROOT, device, TEST_DATASET_PATHS=None):
         # Setup parameters and load data immediately on initialization
         super(FMRIDataModule).__init__()
         self.TRAIN_DATASET_PATHS = TRAIN_DATASET_PATHS
+        self.DATASET_SAVE_ROOT = DATASET_SAVE_ROOT
         self.TEST_DATASET_PATHS = TEST_DATASET_PATHS
-        self.BATCH_SIZE = BATCH_SIZE
+        # self.BATCH_SIZE = BATCH_SIZE
         self.device = device
         self.test_dataset = None
         self.val_dataset = None
         self.train_dataset = None
-        self.metrics_dataset = None
         self.load_data()
 
     # Function for loading the data
@@ -395,13 +256,57 @@ class FMRIDataModule(pl.LightningDataModule):
 
         # Output the current splits for the datasets
         print(f'Loaded datasets: {len(self.train_dataset)} training samples, {len(self.val_dataset)} validation samples, {len(self.test_dataset)} test samples.')
+        print(f"Saving datasets...")
+        try:
+            torch.save(self.train_dataset, os.path.join(DATASET_SAVE_ROOT, "train_dataset.pt"))
+            torch.save(self.val_dataset, os.path.join(DATASET_SAVE_ROOT, "val_dataset.pt"))
+            torch.save(self.test_dataset, os.path.join(DATASET_SAVE_ROOT, "test_dataset.pt"))
+        except Exception as e:
+            print(f"Couldn't save the datasets: {e}")
+        print(f"Datasets saved!")
 
-    # Set up the dataloaders
-    def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=2, shuffle=True, collate_fn=collate_fn, persistent_workers=True)
+if __name__ == '__main__':
+    # Set up parser and arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--TRAINING_DATASET_PATH", required=True, help="Path to the training data")
+    parser.add_argument("--TEST_DATASET_PATH", default=None, help="Optional: Potentiel of seperate dataset path")
+    parser.add_argument("--DATASET_SAVE_ROOT", required=True, help="Path to where the dataset should be saved")
 
-    def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=1, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
+    # parse and load the arguments
+    args = parser.parse_args()
+    TRAINING_DATASET_PATH = args.TRAINING_DATASET_PATH
+    TEST_DATASET_PATH = args.TEST_DATASET_PATH
+    DATASET_SAVE_ROOT = args.DATASET_SAVE_ROOT
 
-    def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.BATCH_SIZE, num_workers=0, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
+    # Expand the provided dataset paths
+    TRAINING_DATASET_PATHS = glob.glob(TRAINING_DATASET_PATH)
+
+    if TEST_DATASET_PATH is not None:
+        TEST_DATASET_PATHS = glob.glob(TEST_DATASET_PATH)
+    else:
+        TEST_DATASET_PATHS=None
+
+    # setting the device
+    device = 'cpu'
+    if torch.cuda.is_available():
+        torch.multiprocessing.set_start_method('spawn')
+        device = 'cuda'
+        print(f'Running on {device}!')
+
+    # Create the datset module
+    FMRIDataModule(
+        TRAIN_DATASET_PATHS=TRAINING_DATASET_PATHS,
+        DATASET_SAVE_ROOT=DATASET_SAVE_ROOT,
+        device=device,
+        TEST_DATASET_PATHS=TEST_DATASET_PATHS
+    )
+
+    # # Set up the dataloaders
+    # def train_dataloader(self):
+    #     return DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=2, shuffle=True, collate_fn=collate_fn, persistent_workers=True)
+
+    # def val_dataloader(self):
+    #     return DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=1, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
+
+    # def test_dataloader(self):
+    #     return DataLoader(self.test_dataset, batch_size=self.BATCH_SIZE, num_workers=0, shuffle=False, collate_fn=collate_fn, persistent_workers=True)

@@ -12,79 +12,8 @@ from tqdm import tqdm
 from data.fmri_dataset import FMRIDataModule
 from models.unet3d_fieldmap import UNet3DFieldmap
 import inference
+from data.dataloader import create_dataloaders
 from metrics.metrics import TemporalCorrelation
-
-
-def _infer_sample(model_path, training_dataset_path, device):
-    """
-    Perform inference for a single sample and log the results to wandb.
-    :param model_path: Path to the model checkpoint that should be used for inference.
-    :param training_dataset_path: Path to the dataset from which the sample should be extracted.
-    :param device: Device on which inference should be performed.
-    """
-
-    output_path = os.path.join(wandb.run.dir, 'inferred-data')
-
-    input_dataset_path = glob.glob(training_dataset_path)[0]
-    input_subject_path = glob.glob(os.path.join(input_dataset_path, 'sub-*'))[0]
-
-    inference.infer_and_store(
-        input_subject_path=input_subject_path,
-        output_path=output_path,
-        checkpoint_path=model_path,
-        device=device
-    )
-
-    artifact = wandb.Artifact(name='inferred-data', type='model-output')
-    artifact.add_dir(local_path=output_path)
-    wandb.log_artifact(artifact)
-
-
-def _evaluate_temporal_correlation(model, dataloader):
-    """
-    Calculate the temporal correlation metric for a trained model and log it to wandb.
-    :param model: The model that should be evaluated.
-    :param dataloader: The dataloader to be used for evaluation, will most likely be a validation or test data loader.
-    """
-
-    pearson_coefficients_out = []
-    pearson_coefficients_distorted = []
-
-    print("Calculating temporal correlation...")
-
-    for batch in tqdm(dataloader):
-        temporal_correlation_out = TemporalCorrelation()
-        temporal_correlation_distorted = TemporalCorrelation()
-
-        for idx in range(len(batch[1][0])):
-            img = np.swapaxes(batch[0][0], 0, 1)[idx]
-            b0u = batch[1][0][idx]
-            b0d = batch[0][0][0][idx]
-            mask = batch[2][0][idx]
-
-            # TODO: undistort with nipype here!
-
-            out = model(img.unsqueeze(0))
-            temporal_correlation_out.update(
-                ground_truth=b0u.squeeze().detach().cpu().numpy(),
-                image=torch.where(mask, out, -1).squeeze().detach().cpu().numpy()
-            )
-            temporal_correlation_distorted.update(
-                ground_truth=b0u.squeeze().detach().cpu().numpy(),
-                image=b0d.detach().cpu().numpy()
-            )
-
-        sample_pearson_coefficients_out, _ = temporal_correlation_out.compute()
-        sample_pearson_coefficients_distorted, _ = temporal_correlation_distorted.compute()
-
-        pearson_coefficients_out.append(sample_pearson_coefficients_out)
-        pearson_coefficients_distorted.append(sample_pearson_coefficients_distorted)
-
-    wandb.log({
-        'correlation_mean': np.nanmean(np.array(pearson_coefficients_out)),
-        'correlation_std': np.nanstd(np.array(pearson_coefficients_out)),
-        'correlation_median': np.nanmedian(np.array(pearson_coefficients_out))
-    })
 
 """
 Main function for doing the training
@@ -92,16 +21,12 @@ Main function for doing the training
 if __name__ == '__main__':
     # Set up parser and arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--TRAINING_DATASET_PATH", required=True, help="Path to the training data")
-    parser.add_argument("--TEST_DATASET_PATH", default=None, help="Optional: Potentiel of seperate dataset path")
     parser.add_argument("--CHECKPOINT_PATH", required=True, help="Path to hold the model checkpoint")
     parser.add_argument("--max_epochs", type=int, default=3, help="Epochs for the model to run")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size to use in the model")
 
     # parse and load the arguments
     args = parser.parse_args()
-    TRAINING_DATASET_PATH = args.TRAINING_DATASET_PATH
-    TEST_DATASET_PATH = args.TEST_DATASET_PATH
     CHECKPOINT_PATH = args.CHECKPOINT_PATH
     max_epochs = args.max_epochs
     batch_size = args.batch_size
@@ -112,21 +37,16 @@ if __name__ == '__main__':
         torch.multiprocessing.set_start_method('spawn')
         device = 'cuda'
         print(f'Running on {device}!')
+    
+    # Retrieve the dataloaders
+    train_dataloader, val_dataloader, test_dataloader = create_dataloaders(batch_size=batch_size)
 
-    # Expand the provided dataset paths
-    TRAINING_DATASET_PATHS = glob.glob(TRAINING_DATASET_PATH)
-
-    if TEST_DATASET_PATH is not None:
-        TEST_DATASET_PATHS = glob.glob(TEST_DATASET_PATH)
-    else:
-        TEST_DATASET_PATHS=None
 
     # Initialize the data module and 3D unet model
-    data_module = FMRIDataModule(TRAIN_DATASET_PATHS=TRAINING_DATASET_PATHS, BATCH_SIZE=batch_size, device=device, TEST_DATASET_PATHS=TEST_DATASET_PATHS)
+    # data_module = FMRIDataModule(TRAIN_DATASET_PATHS=TRAINING_DATASET_PATHS, BATCH_SIZE=batch_size, device=device, TEST_DATASET_PATHS=TEST_DATASET_PATHS)
 
     #################### TESTING START ###############
     # Testing the loaders
-    train_dataloader = data_module.train_dataloader()
     sample_batch = next(iter(train_dataloader))
 
     # Inspecting the batch
@@ -172,6 +92,8 @@ if __name__ == '__main__':
     # # Set up early stopping 
     # early_stop_callback = EarlyStopping(monitor='val_loss', mode='min', min_delta=10, patience=5)
 
+    # print(f"This is right before defining the trainer, skrt...")
+
     # # Define the trainer
     # trainer = L.Trainer(
     #     max_epochs=max_epochs,                                              # Max number of allowed epochs
@@ -203,3 +125,74 @@ if __name__ == '__main__':
 
     _evaluate_temporal_correlation(unet3d, data_module.metrics_dataloader())'''
 """
+
+# def _infer_sample(model_path, training_dataset_path, device):
+#     """
+#     Perform inference for a single sample and log the results to wandb.
+#     :param model_path: Path to the model checkpoint that should be used for inference.
+#     :param training_dataset_path: Path to the dataset from which the sample should be extracted.
+#     :param device: Device on which inference should be performed.
+#     """
+
+#     output_path = os.path.join(wandb.run.dir, 'inferred-data')
+
+#     input_dataset_path = glob.glob(training_dataset_path)[0]
+#     input_subject_path = glob.glob(os.path.join(input_dataset_path, 'sub-*'))[0]
+
+#     inference.infer_and_store(
+#         input_subject_path=input_subject_path,
+#         output_path=output_path,
+#         checkpoint_path=model_path,
+#         device=device
+#     )
+
+#     artifact = wandb.Artifact(name='inferred-data', type='model-output')
+#     artifact.add_dir(local_path=output_path)
+#     wandb.log_artifact(artifact)
+
+
+# def _evaluate_temporal_correlation(model, dataloader):
+#     """
+#     Calculate the temporal correlation metric for a trained model and log it to wandb.
+#     :param model: The model that should be evaluated.
+#     :param dataloader: The dataloader to be used for evaluation, will most likely be a validation or test data loader.
+#     """
+
+#     pearson_coefficients_out = []
+#     pearson_coefficients_distorted = []
+
+#     print("Calculating temporal correlation...")
+
+#     for batch in tqdm(dataloader):
+#         temporal_correlation_out = TemporalCorrelation()
+#         temporal_correlation_distorted = TemporalCorrelation()
+
+#         for idx in range(len(batch[1][0])):
+#             img = np.swapaxes(batch[0][0], 0, 1)[idx]
+#             b0u = batch[1][0][idx]
+#             b0d = batch[0][0][0][idx]
+#             mask = batch[2][0][idx]
+
+#             # TODO: undistort with nipype here!
+
+#             out = model(img.unsqueeze(0))
+#             temporal_correlation_out.update(
+#                 ground_truth=b0u.squeeze().detach().cpu().numpy(),
+#                 image=torch.where(mask, out, -1).squeeze().detach().cpu().numpy()
+#             )
+#             temporal_correlation_distorted.update(
+#                 ground_truth=b0u.squeeze().detach().cpu().numpy(),
+#                 image=b0d.detach().cpu().numpy()
+#             )
+
+#         sample_pearson_coefficients_out, _ = temporal_correlation_out.compute()
+#         sample_pearson_coefficients_distorted, _ = temporal_correlation_distorted.compute()
+
+#         pearson_coefficients_out.append(sample_pearson_coefficients_out)
+#         pearson_coefficients_distorted.append(sample_pearson_coefficients_distorted)
+
+#     wandb.log({
+#         'correlation_mean': np.nanmean(np.array(pearson_coefficients_out)),
+#         'correlation_std': np.nanstd(np.array(pearson_coefficients_out)),
+#         'correlation_median': np.nanmedian(np.array(pearson_coefficients_out))
+#     })
