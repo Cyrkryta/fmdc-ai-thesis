@@ -40,6 +40,13 @@ def perform_padding(tensor, target_size):
     return padded_tensor
 
 """
+Round up to a suitable multiple
+"""
+def round_up_to_multiple(x, factor):
+    new_x = ((x + factor -1) // factor) * factor
+    return new_x
+
+"""
 Custom collate function for padding the batches (input and output)
 Input shape: []
 """
@@ -50,11 +57,11 @@ def collate_fn(batch):
     max_y = max(sample[0][0].shape[1] for sample in batch)
     max_z = max(sample[0][0].shape[2] for sample in batch)
 
-    print(f"Max X Dimension: {max_x}")
-    print(f"Max Y Dimension: {max_y}")
-    print(f"Max Z Dimension: {max_z}")
+    # max_x, max_y, max_z = 100, 100, 100
 
+    # Defining the target size
     target_size = (max_x, max_y, max_z)
+    print(f"Padded target size: {target_size}")
 
     # Placeholder for the padded batch
     padded_batch = []
@@ -76,17 +83,13 @@ def collate_fn(batch):
             fieldmap_nifti = data_util.get_nifti_image(fieldmap_img, fieldmap_affine)
 
             # Resample the fieldmap image
-            fieldmap_nifti_resampled = data_util.resample_image(fieldmap_nifti, b0u_nifti.affine, b0u_nifti.shape, "linear")
+            fieldmap_nifti_resampled = data_util.resample_image(fieldmap_nifti, b0u_nifti.affine, b0u_nifti.shape)
 
             # Get Resampled image data again
             fieldmap_nifti_resampled_data = fieldmap_nifti_resampled.get_fdata()
             fieldmap_resampled_img = torch.tensor(fieldmap_nifti_resampled_data, dtype=torch.float32).unsqueeze(0)
         else:
             fieldmap_resampled_img = fieldmap
-
-            # print(f"\nb0d_img shape: {b0d_img.shape}")
-            # print(f"fieldmap img shape: {fieldmap_img.shape}")
-            # print(f"fieldmap resampled img shape: {fieldmap_resampled_img.shape}")
 
         # Pad the data
         padded_img_data = perform_padding(img_data, target_size)
@@ -100,7 +103,7 @@ def collate_fn(batch):
         padded_batch.append(new_padded_sample)
 
     # Define a stacked dictionary
-    keys = ["img_data", "b0_u", "mask", "fieldmap", "affine", "echo_spacing", "b0alltf_d", "b0alltf_u"]
+    keys = ["img_data", "b0_u", "mask", "fieldmap", "b0u_affine", "b0d_affine", "fieldmap_affine", "echo_spacing", "b0alltf_d", "b0alltf_u"]
     # Collated placeholder
     collated = {}
     # Handle None cases
@@ -112,6 +115,32 @@ def collate_fn(batch):
 
     # Return the new collate
     return collated
+
+
+        # Retrieve the distorted EPI image and fieldmap image
+        # b0u_img = b0_u[0]
+        # fieldmap_img = fieldmap[0]
+
+        # # Check if the fieldmap and distorted epi image has similar dimensions
+        # if fieldmap_img.shape != b0u_img.shape:
+        #     # If the shapes doesn't fit, resample fieldmap to epi space
+        #     # Retrieve the nifti images
+        #     b0u_nifti = data_util.get_nifti_image(b0u_img, b0u_affine)
+        #     fieldmap_nifti = data_util.get_nifti_image(fieldmap_img, fieldmap_affine)
+
+        #     # Resample the fieldmap image
+        #     fieldmap_nifti_resampled = data_util.resample_image(fieldmap_nifti, b0u_nifti.affine, b0u_nifti.shape)
+
+        #     # Get Resampled image data again
+        #     fieldmap_nifti_resampled_data = fieldmap_nifti_resampled.get_fdata()
+        #     fieldmap_resampled_img = torch.tensor(fieldmap_nifti_resampled_data, dtype=torch.float32).unsqueeze(0)
+        # else:
+        #     fieldmap_resampled_img = fieldmap
+
+            # print(f"\nb0d_img shape: {b0d_img.shape}")
+            # print(f"fieldmap img shape: {fieldmap_img.shape}")
+            # print(f"fieldmap resampled img shape: {fieldmap_resampled_img.shape}")
+
 
 """
 Function for creating the dataloaders
