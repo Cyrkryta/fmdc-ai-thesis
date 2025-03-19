@@ -50,14 +50,8 @@ class UNet3DFieldmap(pl.LightningModule):
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
 
-        # Retrieve the specific images
-
-
         # Compute fieldmap
         out = self(img_data)
-
-        # Remove the padding
-
 
         # Compute the training loss
         train_loss = self.compute_loss(out, fieldmap)
@@ -173,11 +167,9 @@ class UNet3DFieldmap(pl.LightningModule):
     # Function for defining and computing the loss function
     def compute_loss(self, out, fieldmap):
         print("!!!!!!!!!!!!!! compute_loss START")
-        valid_mask = (fieldmap != -100).float()
-        element_wise_loss = F.mse_loss(out, fieldmap, reduction="none")
-        loss = (element_wise_loss * valid_mask).sum() / (valid_mask.sum() + 1e-8)
+        computed_loss = F.mse_loss(out, fieldmap)
         print("!!!!!!!!!!!!!! compute_loss END")
-        return loss
+        return computed_loss
 
     # Configuration of the optimizer
     def configure_optimizers(self):
@@ -213,266 +205,125 @@ class conv3D_block(nn.Module):
 Class:
 Definition of 3D up-convolutional block
 """
-# class up_conv3D_block(nn.Module):
-#     def __init__(self, in_ch, out_ch, scale_tuple):
-#         # Call super
-#         super(up_conv3D_block, self).__init__()
-#         # Pytorch sequential layer for upsampling from bottlenech
-#         self.up_conv3D = nn.Sequential(
-#             # nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
-#             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=2), # no change in dimensions of 3D volume
-#             nn.InstanceNorm3d(out_ch),
-#             nn.ReLU(inplace=True), # increasing the depth by adding one below
-#             nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=2), # no change in dimensions of 3D volume
-#             nn.InstanceNorm3d(out_ch),
-#             nn.ReLU(inplace=True)
-#         )
+class conv3D_block(nn.Module):
 
-#     # Create the forward layer
-#     # def forward(self, x):
-#     #     x = self.up_conv3D(x)
-#     #     return x
-#     def forward(self, x, target_size):
-#         x = F.interpolate(x, size=target_size, mode="trilinear", align_corners=True)
-#         x = self.up_conv3D(x)
-#         return x
-
-class up_conv3d_block(nn.Module):
     def __init__(self, in_ch, out_ch):
-        super(up_conv3d_block, self).__init__()
-        self.conv1 = nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1)
-        self.norm1 = nn.InstanceNorm3d(out_ch)
-        self.relu1 = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1)
-        self.norm2 = nn.InstanceNorm3d(out_ch)
-        self.relu2 = nn.ReLU(inplace=True)
 
-    def forward(self, x, target_size):
-        x = F.interpolate(x, size=target_size, mode="trilinear", align_corners=True)
-        x = self.relu1(self.norm1(self.conv1(x)))
-        x = self.relu2(self.norm2(self.conv2(x)))
+        super(conv3D_block, self).__init__()
+
+        self.conv3D = nn.Sequential(
+            nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+            nn.InstanceNorm3d(out_ch),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+            nn.InstanceNorm3d(out_ch),
+            nn.ReLU(inplace=True)
+        )
+
+    def forward(self, x):
+        x = self.conv3D(x)
         return x
-        
 
-"""
-Cropping functionality
-"""
-def crop(source, target):
-    src_d, src_h, src_w = source.shape[2:]
-    tgt_d, tgt_h, tgt_w = target.shape[2:]
-    diff_d = src_d - tgt_d
-    diff_h = src_h - tgt_h
-    diff_w = src_w - tgt_w
-    source_cropped = source[
-        :,
-        :,
-        diff_d // 2: diff_d // 2 + tgt_d, #src_d - (diff_d - diff_d // 2),
-        diff_h // 2: diff_h // 2 + tgt_h, #src_h - (diff_h - diff_h // 2),
-        diff_w // 2: diff_w // 2 + tgt_w #src_w - (diff_w - diff_w // 2)
-    ]
-    return source_cropped
+class up_conv3D_block(nn.Module):
 
-    # _, _, de, he, we = encoder_tensor.shape
-    # _, _, dt, ht, wt = target_tensor.shape
-    # d_start = (de - dt) // 2
-    # h_start = (he - ht) // 2
-    # w_start = (we - wt) // 2
-    # cropped = encoder_tensor[:, :, d_start:d_start+dt, h_start:h_start+ht, w_start:w_start+wt]
-    return cropped
+    def __init__(self, in_ch, out_ch, scale_tuple):
 
-"""
-Class:
-Define the full model
-"""
+        super(up_conv3D_block, self).__init__()
+
+        self.up_conv3D = nn.Sequential(
+            nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
+            nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+            nn.InstanceNorm3d(out_ch),
+            nn.ReLU(inplace=True), # increasing the depth by adding one below
+            nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+            nn.InstanceNorm3d(out_ch),
+            nn.ReLU(inplace=True)
+        )
+
+    def forward(self, x):
+        x = self.up_conv3D(x)
+        return x
+
+
 class UNet3D_2Module(nn.Module):
     def __init__(self, n_in, n_out):
-        # Call super
         super(UNet3D_2Module, self).__init__()
 
-        print(f"DEFINING FILTERS 3D")
-        # Define the various filters
         filters_3D = [16, 16 * 2, 16 * 4, 16 * 8, 16 * 16, 16 * 16]  # = [16, 32, 64, 128, 256, 512]
 
-        print(f"DEFINING DOWN CONVOLUTIONAL LAYERS")
-        # Convolutional layers
         self.Conv3D_1 = conv3D_block(n_in, filters_3D[0])
         self.Conv3D_2 = conv3D_block(filters_3D[0], filters_3D[1])
         self.Conv3D_3 = conv3D_block(filters_3D[1], filters_3D[2])
         self.Conv3D_4 = conv3D_block(filters_3D[2], filters_3D[3])
         self.Conv3D_5 = conv3D_block(filters_3D[3], filters_3D[4])
         self.Conv3D_6 = conv3D_block(filters_3D[4], filters_3D[5])
-        # print(f"DOWN conv block 1 shape: {self.Conv3D_1.shape}")
-        # print(f"DOWN conv block 2 shape: {self.Conv3D_2.shape}")
-        # print(f"DOWN conv block 3 shape: {self.Conv3D_3.shape}")
-        # print(f"DOWN conv block 4 shape: {self.Conv3D_4.shape}")
-        # print(f"DOWN conv block 5 shape: {self.Conv3D_5.shape}")
-        # print(f"DOWN conv block 6 shape: {self.Conv3D_6.shape}")
 
-
-        print(f"DEFINING POOLING LAYERS")
-        # Define pooling layers
         self.MaxPool3D_1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
         self.MaxPool3D_2 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
         self.MaxPool3D_3 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
         self.MaxPool3D_4 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
         self.MaxPool3D_5 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
-        # print(f"Max pooling 1 shape: {self.MaxPool3D_1.shape}")
-        # print(f"Max pooling 2 shape: {self.MaxPool3D_2.shape}")
-        # print(f"Max pooling 3 shape: {self.MaxPool3D_3.shape}")
-        # print(f"Max pooling 4 shape: {self.MaxPool3D_4.shape}")
-        # print(f"Max pooling 5 shape: {self.MaxPool3D_5.shape}")
 
-        # self.MaxPool3D_1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
-        # self.MaxPool3D_2 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
-        # self.MaxPool3D_3 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
-        # self.MaxPool3D_4 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
-        # self.MaxPool3D_5 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
+        self.up_Conv3D_1 = up_conv3D_block(filters_3D[5], filters_3D[4], (1, 2, 2))
+        self.up_Conv3D_2 = up_conv3D_block(filters_3D[4] + filters_3D[4], filters_3D[3], (1, 2, 2))
+        self.up_Conv3D_3 = up_conv3D_block(filters_3D[3] + filters_3D[3], filters_3D[2], (2, 2, 2))
+        self.up_Conv3D_4 = up_conv3D_block(filters_3D[2] + filters_3D[2], filters_3D[1], (2, 2, 2))
+        self.up_Conv3D_5 = up_conv3D_block(filters_3D[1] + filters_3D[1], filters_3D[0], (1, 2, 2))
 
-        print(f"DEFINING UP CONVOLUTIONAL LAYERS")
-        # Define up-convolutional layers
-        # self.up_Conv3D_1 = up_conv3D_block(filters_3D[5], filters_3D[4], (1, 2, 2))
-        # self.up_Conv3D_2 = up_conv3D_block(filters_3D[4] + filters_3D[4], filters_3D[3], (1, 2, 2))
-        # self.up_Conv3D_3 = up_conv3D_block(filters_3D[3] + filters_3D[3], filters_3D[2], (2, 2, 2))
-        # self.up_Conv3D_4 = up_conv3D_block(filters_3D[2] + filters_3D[2], filters_3D[1], (2, 2, 2))
-        # self.up_Conv3D_5 = up_conv3D_block(filters_3D[1] + filters_3D[1], filters_3D[0], (1, 2, 2))
-        self.up_Conv3D_1 = up_conv3d_block(filters_3D[5], filters_3D[4])
-        self.up_Conv3D_2 = up_conv3d_block(filters_3D[4] + filters_3D[4], filters_3D[3])
-        self.up_Conv3D_3 = up_conv3d_block(filters_3D[3] + filters_3D[3], filters_3D[2])
-        self.up_Conv3D_4 = up_conv3d_block(filters_3D[2] + filters_3D[2], filters_3D[1])
-        self.up_Conv3D_5 = up_conv3d_block(filters_3D[1] + filters_3D[1], filters_3D[0])
-
-        # print(f"UP conv block 1 shape: {self.up_Conv3D_1.shape}")
-        # print(f"UP conv block 2 shape: {self.up_Conv3D_2.shape}")
-        # print(f"UP conv block 3 shape: {self.up_Conv3D_3.shape}")
-        # print(f"UP conv block 4 shape: {self.up_Conv3D_4.shape}")
-        # print(f"UP conv block 5 shape: {self.up_Conv3D_5.shape}")
-
-        print(f"DEFINING FINAL CONVOLUTIONAL LAYERS")
-        # Define the final convolutional layer (output layer)
         self.Conv3D_final = nn.Conv3d(filters_3D[0] + filters_3D[0], n_out, kernel_size=1, stride=1, padding=0)
-        # print(f"FINAL conv block shape: {self.Conv3D_final.shape}")
 
-    # Define the forward layer
+
     def forward(self, e_SA):
-        print(f"\nEncoder")
-        print(f"STARTING POINT: {e_SA.shape}")
         # SA network's encoder
         e_SA_1 = self.Conv3D_1(e_SA)
-        print(f"CONV 1: {e_SA_1.shape}")
         # print("E1:", e_SA_1.shape)
         e_SA = self.MaxPool3D_1(e_SA_1)
-        print(f"MAX POOLING 1: {e_SA.shape}")
         # print("E2:", e_SA.shape)
         e_SA_2 = self.Conv3D_2(e_SA)
-        print(f"CONV 2: {e_SA_2.shape}")
         # print("E3:", e_SA_2.shape)
         e_SA = self.MaxPool3D_2(e_SA_2)
-        print(f"MAX POOLING 2: {e_SA.shape}")
         # print("E4:", e_SA.shape)
         e_SA_3 = self.Conv3D_3(e_SA)
-        print(f"CONV 3: {e_SA_3.shape}")
         # print("E5:", e_SA_3.shape)
         e_SA = self.MaxPool3D_3(e_SA_3)
-        print(f"MAX POOLING 3: {e_SA.shape}")
         # print("E6:", e_SA.shape)
         e_SA_4 = self.Conv3D_4(e_SA)
-        print(f"CONV 4: {e_SA_4.shape}")
         # print("E7:", e_SA_4.shape)
         e_SA = self.MaxPool3D_4(e_SA_4)
-        print(f"MAX POOLING 4: {e_SA.shape}")
         # print("E8:", e_SA.shape)
         e_SA_5 = self.Conv3D_5(e_SA)
-        print(f"CONV 5: {e_SA_5.shape}")
         # print("E9:", e_SA_5.shape)
         e_SA = self.MaxPool3D_5(e_SA_5)
-        print(f"MAX POOLING 5: {e_SA.shape}")
         # print("E10:", e_SA.shape)
         e_SA_6 = self.Conv3D_6(e_SA)
-        print(f"CONV 6: {e_SA_6.shape}")
         # print("E11:", e_SA_6.shape)
 
-        print(f"Delete e_SA")
         del (e_SA)
 
         # SA network's decoder
-        print("1")
-        target_size = e_SA_5.shape[2:]
-        d_SA = self.up_Conv3D_1(e_SA_6, target_size)
+        d_SA = self.up_Conv3D_1(e_SA_6)
+        # print("D1:", d_SA.shape)
         d_SA = torch.cat([e_SA_5, d_SA], dim=1)
-
-        print("2")
-        target_size = e_SA_4.shape[2:]
-        d_SA = self.up_Conv3D_2(d_SA, target_size)
+        # print("D2:", d_SA.shape)
+        d_SA = self.up_Conv3D_2(d_SA)
+        # print("D3:", d_SA.shape)
         d_SA = torch.cat([e_SA_4, d_SA], dim=1)
-
-        print("3")
-        target_size = e_SA_3.shape[2:]
-        d_SA = self.up_Conv3D_3(d_SA, target_size)
+        # print("D4:", d_SA.shape)
+        d_SA = self.up_Conv3D_3(d_SA)
+        # print("D5:", d_SA.shape)
         d_SA = torch.cat([e_SA_3, d_SA], dim=1)
-
-        print("4")
-        target_size = e_SA_2.shape[2:]
-        d_SA = self.up_Conv3D_4(d_SA, target_size)
+        # print("D6:", d_SA.shape)
+        d_SA = self.up_Conv3D_4(d_SA)
+        # print("D7:", d_SA.shape)
         d_SA = torch.cat([e_SA_2, d_SA], dim=1)
-
-        print("5")
-        target_size = e_SA_1.shape[2:]
-        d_SA = self.up_Conv3D_5(d_SA, target_size)
+        # print("D8:", d_SA.shape)
+        d_SA = self.up_Conv3D_5(d_SA)
+        # print("D9:", d_SA.shape)
         d_SA = torch.cat([e_SA_1, d_SA], dim=1)
-
-        print("Final layer")
+        # print("D10:", d_SA.shape)
         d_SA = self.Conv3D_final(d_SA)
-        print(f"UP-CONV FINAL: {d_SA.shape}")
+        # print("D11:", d_SA.shape)
 
-        # d_SA = self.up_Conv3D_1(e_SA_6)
-        # print(f"UP-CONV 1: {d_SA.shape}")
-        # # print("D1:", d_SA.shape)
-        # e_SA_5_cropped = crop(d_SA, e_SA_5)
-        # # d_SA = torch.cat([e_SA_5_cropped, d_SA], dim=1)
-        # d_SA = torch.cat([e_SA_5, d_SA], dim=1) # OLD ONE
-        # print(f"CAT 1: {d_SA.shape}")
-        # # print("D2:", d_SA.shape)
-        # d_SA = self.up_Conv3D_2(d_SA)
-        # print(f"UP-CONV 2: {d_SA.shape}")
-        # # print("D3:", d_SA.shape)
-        # e_SA_4_cropped = crop(e_SA_4, d_SA)
-        # d_SA = torch.cat([e_SA_4_cropped, d_SA], dim=1)
-        # # d_SA = torch.cat([e_SA_4, d_SA], dim=1) # OLD ONE
-        # print(f"CAT 2: {d_SA.shape}")
-        # # print("D4:", d_SA.shape)
-        # d_SA = self.up_Conv3D_3(d_SA)
-        # print(f"UP-CONV 3: {d_SA.shape}")
-        # # print("D5:", d_SA.shape)
-        # e_SA_3_cropped = crop(e_SA_3, d_SA)
-        # d_SA = torch.cat([e_SA_3_cropped, d_SA], dim=1)
-        # # d_SA = torch.cat([e_SA_3, d_SA], dim=1) # OLD ONE
-        # print(f"CAT 3: {d_SA.shape}")
-        # # print("D6:", d_SA.shape)
-        # d_SA = self.up_Conv3D_4(d_SA)
-        # print(f"UP-CONV 4: {d_SA.shape}")
-        # # print("D7:", d_SA.shape)
-        # e_SA_2_cropped = crop(e_SA_2, d_SA)
-        # d_SA = torch.cat([e_SA_2_cropped, d_SA], dim=1)
-        # # d_SA = torch.cat([e_SA_2, d_SA], dim=1) # OLD ONE
-        # print(f"CAT 4: {d_SA.shape}")
-        # # print("D8:", d_SA.shape)
-        # d_SA = self.up_Conv3D_5(d_SA)
-        # print(f"UP-CONV 5: {d_SA.shape}")
-        # # print("D9:", d_SA.shape)
-        # e_SA_1_cropped = crop(e_SA_1, d_SA)
-        # d_SA = torch.cat([e_SA_1_cropped, d_SA], dim=1)
-        # # d_SA = torch.cat([e_SA_1, d_SA], dim=1) # OLD ONE
-        # print(f"CAT 5: {d_SA.shape}")
-        # # print("D10:", d_SA.shape)
-        # d_SA = self.Conv3D_final(d_SA)
-        # print(f"UP-CONV FINAL: {d_SA.shape}")
-        # # print("D11:", d_SA.shape)
-
-        # Delete the encoding layers
         del (e_SA_1, e_SA_2, e_SA_3, e_SA_4, e_SA_5)
-        print(f"Delete encoder")
-        # del (e_SA_1_cropped, e_SA_2_cropped, e_SA_3_cropped, e_SA_4_cropped, e_SA_5_cropped)
 
-        # Return the last decoding layer (output layer)
-        print(f"Returning output layer - final layer")
         return d_SA
