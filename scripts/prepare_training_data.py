@@ -273,10 +273,13 @@ def _convert_all_datasets(SOURCE_DATASET_ROOT_DIR: str, DEST_DATASET_ROOT_DIR: s
             if all_files_exist:
                 continue
             else:
-                # Convert the subject and copy its output to the output directory
-                print(f'Processing subject {subject}...')
-                _convert_subject(SUBJECT_INPUT_PATH, dataset, FSL_DIR)
-                _copy_output_to_new_dir(SUBJECT_INPUT_PATH, SUBJECT_OUTPUT_PATH)
+                try:
+                    # Convert the subject and copy its output to the output directory
+                    print(f'Processing subject {subject}...')
+                    _convert_subject(SUBJECT_INPUT_PATH, dataset, FSL_DIR)
+                    _copy_output_to_new_dir(SUBJECT_INPUT_PATH, SUBJECT_OUTPUT_PATH)
+                except Exception as e:
+                    print(f"Error processing subject {subject}: {e}")
                 
         # Copy the participants.tsv file to the processed data output path
         shutil.copy2(
