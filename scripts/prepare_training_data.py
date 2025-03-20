@@ -81,6 +81,7 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     out_b0_mask = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_mask.nii.gz")), clobber=True), name="out_b0_mask")
     out_b0_u = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_u.nii.gz")), clobber=True), name="out_b0_u")
     out_t1w = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "T1w.nii.gz")), clobber=True), name="out_t1w")
+    out_b0_d_10 = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_d_10.nii.gz")), clobber=True), name="out_b0_d_10")
 
     """ Function Nodes """
     # Skullstripping and magnitude erode
@@ -89,6 +90,10 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     mag_erode = Node(fsl.maths.ErodeImage(), name="mag_erode")
     # Mean Image
     mean_func = Node(fsl.maths.MeanImage(dimension="T"), name="mean_func")
+    # Median image
+    median_tf = Node(Function(function=GetMedianTF, input_names=["in_file"], output_names=["out_value"]), name="median_tf")
+    median_tf_minus_five = Node(Function(function=SubtractFive, input_names=["in_value"], output_names=["out_value"]), name="median_tf_minus_five")
+    extract_roi_func_10 = Node(fsl.ExtractROI(t_size=10), name="extract_roi_func_10")
     # Registrations and matrices
     mean_func_to_anat_reg = Node(fsl.epi.EpiREG(), name="mean_func_to_anat_reg")
     invert_mean_func_to_anat_mat = Node(fsl.utils.ConvertXFM(invert_xfm=True), name="invert_mean_func_to_anat_mat")
@@ -114,6 +119,11 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
         (in_anatomical_image, anat_skullstrip, (["out_file", "in_file"])),                      # Anat skullstripping
         (in_magnitude_image, mag_skullstrip, (["out_file", "in_file"])),                        # Mag skullstripping
         (mag_skullstrip, mag_erode, (["out_file", "in_file"])),                                 # Mag erosion
+        (in_functional_image, median_tf, (["out_file", "in_file"])),                            # Extract median tf
+        (in_functional_image, extract_roi_func_10, (["out_file", "in_file"])),                  # Extract 10 tf functional image
+        (median_tf, median_tf_minus_five, (["out_value", "in_value"])),                         # Subtract five from median
+        (median_tf_minus_five, extract_roi_func_10, (["out_value", "t_min"])),                  # Extract the functional timeframe
+        (extract_roi_func_10, out_b0_d_10, (["roi_file", "in_file"])), 
         (in_functional_image, mean_func, (["out_file", "in_file"])),                            # Func mean image
         (mag_erode, mag_to_mean_func_reg, (["out_file", "in_file"])),                           # Mag to mean func reg
         (mean_func, mag_to_mean_func_reg, (["out_file", "reference"])),
@@ -123,7 +133,7 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
         (in_anatomical_image, mean_func_to_anat_reg, (["out_file", "t1_head"])),                # Mean func to anat reg
         (anat_skullstrip, mean_func_to_anat_reg, (["out_file", "t1_brain"])),
         (mean_func, mean_func_to_anat_reg, (["out_file", "epi"])),
-        (mean_func_to_anat_reg, out_meanf_to_anat, (["epi2str_mat","in_file"])),                # Export mean func to anat reg matrix
+        (mean_func_to_anat_reg, out_meanf_to_anat, (["epi2str.mat","in_file"])),                # Export mean func to anat reg matrix
         (mean_func_to_anat_reg, invert_mean_func_to_anat_mat, (["epi2str.mat", "in_file"])),    # Invert the mean func to anat reg matrix
         (phase_to_mean_func_reg, prepare_fieldmap, (["out_file", "in_phase"])),                 # Prepare the fieldmap
         (mag_to_mean_func_reg, prepare_fieldmap, (["out_file", "in_phase"])),
