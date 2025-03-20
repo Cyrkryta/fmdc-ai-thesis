@@ -82,14 +82,17 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     out_b0_u = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_u.nii.gz")), clobber=True), name="out_b0_u")
     out_t1w = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "T1w.nii.gz")), clobber=True), name="out_t1w")
     out_b0_d_10 = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_d_10.nii.gz")), clobber=True), name="out_b0_d_10")
+    out_mni_warp = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "T1w_to_MNI_warp.nii.gz")), clobber=True), name="out_mni_warp")
 
     """ Function Nodes """
+    # functional image motion correction
+    func_motion_correct = Node(fsl.MCFLIRT(mean_vol=True), name="func_motion_correct")
     # Skullstripping and magnitude erode
     anat_skullstrip = Node(fsl.BET(frac=0.5, mask=True), name="anat_skullstrip")
     mag_skullstrip = Node(fsl.BET(frac=0.5, mask=True), name="mag_skullstrip")
     mag_erode = Node(fsl.maths.ErodeImage(), name="mag_erode")
     # Mean Image
-    mean_func = Node(fsl.maths.MeanImage(dimension="T"), name="mean_func")
+    # mean_func = Node(fsl.maths.MeanImage(dimension="T"), name="mean_func")
     # Median image
     median_tf = Node(Function(function=GetMedianTF, input_names=["in_file"], output_names=["out_value"]), name="median_tf")
     median_tf_minus_five = Node(Function(function=SubtractFive, input_names=["in_value"], output_names=["out_value"]), name="median_tf_minus_five")
@@ -110,45 +113,58 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     # Transform and intensity normalizing anat
     transform_anat = Node(fsl.FLIRT(apply_xfm=True), name="transform_anat")
     intensity_normalize_anat = Node(Function(function=IntensityNormalization, input_name=["in_file"], output_names=["out_file"]), name="intensity_normalize_anat")
+    # Register t1w to MNI
+    transform_t1_to_mni = Node(fsl.FLIRT(dof=12, reference=f"{FSL_DIR}/data/standard/MNI152_T1_2mm_brain.nii.gz"), name="transform_t1_to_mni")
+    register_t1_to_mni = Node(fsl.FNIRT(config_file="T1_2_MNI152_2mm", ref_file=f"{FSL_DIR}/data/standard/MNI152_T1_2mm_brain.nii.gz", field_file=True), name="register_t1_to_mni")
+    # Extract 10 skullstrip
+    func_ex10_skullstrip = Node(fsl.Bet(functional=True, mask=True), name="func_ex10_skullstrip")
 
     """ Workflow """
     # Define workflow
     preprocessing_workflow = Workflow(name="preprocessing_workflow")
     # Connect workflow
     preprocessing_workflow.connect([
+        (in_functional_image, func_motion_correct, (["out_file", "in_file"])),                  # Motion correction
         (in_anatomical_image, anat_skullstrip, (["out_file", "in_file"])),                      # Anat skullstripping
         (in_magnitude_image, mag_skullstrip, (["out_file", "in_file"])),                        # Mag skullstripping
         (mag_skullstrip, mag_erode, (["out_file", "in_file"])),                                 # Mag erosion
-        (in_functional_image, median_tf, (["out_file", "in_file"])),                            # Extract median tf
-        (in_functional_image, extract_roi_func_10, (["out_file", "in_file"])),                  # Extract 10 tf functional image
+        (func_motion_correct, median_tf, (["out_file", "in_file"])),                            # Extract median tf
+        (func_motion_correct, extract_roi_func_10, (["out_file", "in_file"])),                  # Extract 10 tf functional image
         (median_tf, median_tf_minus_five, (["out_value", "in_value"])),                         # Subtract five from median
         (median_tf_minus_five, extract_roi_func_10, (["out_value", "t_min"])),                  # Extract the functional timeframe
-        (extract_roi_func_10, out_b0_d_10, (["roi_file", "in_file"])), 
-        (in_functional_image, mean_func, (["out_file", "in_file"])),                            # Func mean image
+        (extract_roi_func_10, func_ex10_skullstrip, (["roi_file", "in_file"])),
+        (func_ex10_skullstrip, out_b0_d_10, (["out_file", "in_file"])),
+        # (extract_roi_func_10, out_b0_d_10, (["roi_file", "in_file"])), 
+        # (in_functional_image, mean_func, (["out_file", "in_file"])),                            # Func mean image
         (mag_erode, mag_to_mean_func_reg, (["out_file", "in_file"])),                           # Mag to mean func reg
-        (mean_func, mag_to_mean_func_reg, (["out_file", "reference"])),
+        (func_motion_correct, mag_to_mean_func_reg, (["mean_img", "reference"])),
         (in_phase_image, phase_to_mean_func_reg, (["out_file", "in_file"])),                    # Phase to mean func reg
         (mag_to_mean_func_reg, phase_to_mean_func_reg, (["out_matrix_file", "in_matrix_file"])),
-        (mean_func, phase_to_mean_func_reg, (["out_file", "reference"])),
+        (func_motion_correct, phase_to_mean_func_reg, (["mean_img", "reference"])),
         (in_anatomical_image, mean_func_to_anat_reg, (["out_file", "t1_head"])),                # Mean func to anat reg
         (anat_skullstrip, mean_func_to_anat_reg, (["out_file", "t1_brain"])),
-        (mean_func, mean_func_to_anat_reg, (["out_file", "epi"])),
+        (func_motion_correct, mean_func_to_anat_reg, (["mean_img", "epi"])),
         (mean_func_to_anat_reg, out_meanf_to_anat, (["epi2str.mat","in_file"])),                # Export mean func to anat reg matrix
         (mean_func_to_anat_reg, invert_mean_func_to_anat_mat, (["epi2str.mat", "in_file"])),    # Invert the mean func to anat reg matrix
         (phase_to_mean_func_reg, prepare_fieldmap, (["out_file", "in_phase"])),                 # Prepare the fieldmap
-        (mag_to_mean_func_reg, prepare_fieldmap, (["out_file", "in_phase"])),
+        (mag_to_mean_func_reg, prepare_fieldmap, (["out_file", "in_magnitude"])),
         (prepare_fieldmap, out_field_map, (["out_fieldmap", "in_file"])),                       # Export the fieldmap
         (in_functional_image, fugue_correction, (["out_file", "in_file"])),                     # Creating ground truth correction
         (prepare_fieldmap, fugue_correction, (["out_fieldmap", "in_file"])),
         (fugue_correction, fugue_skullstrip, (["unwarped_file", "in_file"])),                   # Skullstrip unwarped func
         (fugue_skullstrip, out_b0_u, (["out_file", "in_file"])),                                # Export the skullstripped unwarped output
+        (func_motion_correct, func_skullstrip, (["out_file", "in_file"])),
         (func_skullstrip, out_b0_d, (["out_file", "in_file"])),                                 # Export non-corrected func image
-        (func_skullstrip, out_b0_mask, (["out_mask", "in_file"])),                              # Export the functional image mask
+        (func_skullstrip, out_b0_mask, (["mask_file", "in_file"])),                             # Export the functional image mask
         (anat_skullstrip, intensity_normalize_anat, (["out_file", "in_file"])),                 # Intensity normalizing anatomical
         (intensity_normalize_anat, transform_anat, (["out_file", "in_file"])),                  # Transform anatomical image
         (fugue_skullstrip, transform_anat, (["out_file", "reference"])),
         (invert_mean_func_to_anat_mat, transform_anat, (["out_file", "in_matrix_file"])),
         (transform_anat, out_t1w, (["out_file", "in_file"])),                                   # Export t1w image
+        (intensity_normalize_anat, transform_t1_to_mni, (["out_file", "in_file"])),             # Transform and register t1 to mni
+        (intensity_normalize_anat, register_t1_to_mni, (["out_file", "in_file"])),
+        (transform_t1_to_mni, register_t1_to_mni, (["out_matrix_file", "affine_file"])),
+        (register_t1_to_mni, out_mni_warp, (["field_file", "in_file"]))
     ])
 
     # # Setting up the export nodes for the processed files
@@ -267,7 +283,9 @@ def _convert_all_datasets(SOURCE_DATASET_ROOT_DIR: str, DEST_DATASET_ROOT_DIR: s
                 os.path.isfile(os.path.join(SUBJECT_OUTPUT_PATH, 'b0_mask.nii.gz')) and \
                 os.path.isfile(os.path.join(SUBJECT_OUTPUT_PATH, 'T1w_to_MNI_warp.nii.gz')) and \
                 os.path.isfile(os.path.join(SUBJECT_OUTPUT_PATH, 'field_map.nii.gz')) and \
-                os.path.isfile(os.path.join(SUBJECT_OUTPUT_PATH, 'func2struct.mat'))
+                os.path.isfile(os.path.join(SUBJECT_OUTPUT_PATH, 'func2struct.mat')) and \
+                os.path.isfile(os.path.join(SUBJECT_OUTPUT_PATH, 'b0_d_10.nii.gz'))
+                    
             
             # If all the files already exists, continue, otherwise convert the subject data
             if all_files_exist:
