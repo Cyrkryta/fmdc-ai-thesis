@@ -12,7 +12,7 @@ import numpy as np
 from nipype import Node, Workflow, Function
 import nipype.interfaces.io as nio
 from nipype.interfaces import fsl
-from nipype.interfaces.fsl import BET, MeanImage, EpiReg, FLIRT, PrepareFieldmap, FUGUE
+from nipype.interfaces.fsl import BET, MeanImage, EpiReg, FLIRT, PrepareFieldmap, FUGUE, ConvertXFM
 from nipype.interfaces.fsl.maths import ErodeImage
 from nipype import SelectFiles
 
@@ -74,76 +74,72 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-
-    # Skullstrip anatomical and magnitude nodes
-    anatomical_skullstrip = Node(BET(frac=0.5, mask=True), name="anatomical_skullstrip")
-    magnitude_skullstrip = Node(BET(frac=0.5, mask=True), name="magnitude_skullstrip")
-
-    # Magnitude erode
-    magnitude_erode = Node(ErodeImage(), name="magnitude_erode")
-
-    # Mean functional image node
-    mean_functional = Node(MeanImage(dimension="T"), name="mean_functional")
-
-    # Registration nodes
-    meanf_to_anatomical_reg = Node(EpiReg(), name="meanf_to_anatomical_reg")
-    magnitude_to_meanf_reg = Node(FLIRT(out_matrix_file="magnitude_to_meanf_reg.mat"), name="magnitude_to_meanf_reg")
-    phasediff_to_meanf_reg = Node(FLIRT(apply_xfm=True), name="phasediff_to_meanf_reg")
-
-    # Prepare fieldmap node
-    prepare_fieldmap = Node(PrepareFieldmap(delta_TE=2.46, scanner="SIEMENS"), name="prepare_fieldmap")
-
-    # FUGUE correction
-    fugue_correction = Node(FUGUE(dwell_time=dataset["echospacing"], unwarp_direction=dataset["phaseencodingdirection"]), name="fugue_correction")
-
-    # Skullstripping fugue corrected output
-    fugue_corrected_skullstrip = Node(BET(functional=True), name="fugue_corrected_skullstrip")
-
-
-    # Fugue correction skullstripped export
+    # output files
     out_field_map = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "field_map.nii.gz")), clobber=True), name="out_field_map")
+    out_meanf_to_anat = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "func2struct.mat")), clobber=True), name="out_func_to_struct")
+    out_b0_d = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_d.nii.gz")), clobber=True), name="out_b0_d")
+    out_b0_mask = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_mask.nii.gz")), clobber=True), name="out_b0_mask")
+    out_b0_u = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_u.nii.gz")), clobber=True), name="out_b0_u")
+    out_t1w = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "T1w.nii.gz")), clobber=True), name="out_t1w")
 
-    # Define the overall workflow
+    """ Function Nodes """
+    # Skullstripping and magnitude erode
+    anat_skullstrip = Node(fsl.BET(frac=0.5, mask=True), name="anat_skullstrip")
+    mag_skullstrip = Node(fsl.BET(frac=0.5, mask=True), name="mag_skullstrip")
+    mag_erode = Node(fsl.maths.ErodeImage(), name="mag_erode")
+    # Mean Image
+    mean_func = Node(fsl.maths.MeanImage(dimension="T"), name="mean_func")
+    # Registrations and matrices
+    mean_func_to_anat_reg = Node(fsl.epi.EpiREG(), name="mean_func_to_anat_reg")
+    invert_mean_func_to_anat_mat = Node(fsl.utils.ConvertXFM(invert_xfm=True), name="invert_mean_func_to_anat_mat")
+    mag_to_mean_func_reg = Node(fsl.FLIRT(out_matrix_file="mag_to_mean_func_reg.mat"), name="mag_to_mean_func_reg")
+    phase_to_mean_func_reg = Node(fsl.FLIRT(apply_xfm=True), name="phase_to_mean_func_reg")
+    # Prepare fieldmap
+    prepare_fieldmap = Node(fsl.PrepareFieldmap(delta_TE=2.46, scanner="SIEMENS"), name="prepare_fieldmap")
+    # Fugue correction
+    fugue_correction = Node(fsl.FUGUE(dell_time=dataset["echospacing"], unwarp_direction=dataset["phaseencodingdirection"]), name="fugue_correction")
+    # Skullstrip fugue correction
+    fugue_skullstrip = Node(fsl.BET(functional=True), name="fugue_skullstrip")
+    # Func skullstrip
+    func_skullstrip = Node(fsl.BET(functional=True, mask=True), name="func_skullstrip")
+    # Transform and intensity normalizing anat
+    transform_anat = Node(fsl.FLIRT(apply_xfm=True), name="transform_anat")
+    intensity_normalize_anat = Node(Function(function=IntensityNormalization, input_name=["in_file"], output_names=["out_file"]), name="intensity_normalize_anat")
+
+    """ Workflow """
+    # Define workflow
     preprocessing_workflow = Workflow(name="preprocessing_workflow")
-    
-    # Connect the nodes into the workflow
+    # Connect workflow
     preprocessing_workflow.connect([
-        # Input connections
-        (in_anatomical_image, anatomical_skullstrip, [("out_file", "in_file")]),
-        (in_magnitude_image, magnitude_skullstrip, [("out_file", "in_file")]),
-        (in_functional_image, mean_functional, [("out_file", "in_file")]),
-
-        # Erode the magnitude image
-        (magnitude_skullstrip, magnitude_erode, [("out_file", "in_file")]),
-
-        # Register eroded magnitude image to mean functional image
-        (magnitude_erode, magnitude_to_meanf_reg, [("out_file", "in_file")]),
-        (mean_functional, magnitude_to_meanf_reg, [("out_file", "reference")]),
-
-        # Apply the magnitude to meanf transformation matrix to the phasediff image
-        (in_phase_image, phasediff_to_meanf_reg, [("out_file", "in_file")]),
-        (magnitude_to_meanf_reg, phasediff_to_meanf_reg, [("out_matrix_file", "in_matrix_file")]),
-        (mean_functional, phasediff_to_meanf_reg, [("out_file", "reference")]),
-
-        # Prepare fieldmap using transformed phasediff and magnitude images
-        (phasediff_to_meanf_reg, prepare_fieldmap, (["out_file", "in_phase"])),
-        (magnitude_to_meanf_reg, prepare_fieldmap, (["out_file", "in_magnitude"])),
-
-        # Unwarp the functional image
-        (in_functional_image, fugue_correction, (["out_file", "in_file"]))
-        (prepare_fieldmap, fugue_correction, (["out_file", "fmap_in_file"]))
-        
-        # Register mean functional image to t1w with epi-reg
-        (in_anatomical_image, meanf_to_anatomical_reg, (["out_file", "t1_head"])),
-        (anatomical_skullstrip, meanf_to_anatomical_reg, (["out_file", "t1_brain"])),
-        (mean_functional, meanf_to_anatomical_reg, (["out_file", "epi"])),
-
-        # Skullstripping fugue corrected output and exporting the fieldmap
-        (fugue_correction, fugue_corrected_skullstrip, (["unwarped_file", "in_file"])),
-        (fugue_corrected_skullstrip, out_field_map, (["out_file", "in_file"]))    
+        (in_anatomical_image, anat_skullstrip, (["out_file", "in_file"])),                      # Anat skullstripping
+        (in_magnitude_image, mag_skullstrip, (["out_file", "in_file"])),                        # Mag skullstripping
+        (mag_skullstrip, mag_erode, (["out_file", "in_file"])),                                 # Mag erosion
+        (in_functional_image, mean_func, (["out_file", "in_file"])),                            # Func mean image
+        (mag_erode, mag_to_mean_func_reg, (["out_file", "in_file"])),                           # Mag to mean func reg
+        (mean_func, mag_to_mean_func_reg, (["out_file", "reference"])),
+        (in_phase_image, phase_to_mean_func_reg, (["out_file", "in_file"])),                    # Phase to mean func reg
+        (mag_to_mean_func_reg, phase_to_mean_func_reg, (["out_matrix_file", "in_matrix_file"])),
+        (mean_func, phase_to_mean_func_reg, (["out_file", "reference"])),
+        (in_anatomical_image, mean_func_to_anat_reg, (["out_file", "t1_head"])),                # Mean func to anat reg
+        (anat_skullstrip, mean_func_to_anat_reg, (["out_file", "t1_brain"])),
+        (mean_func, mean_func_to_anat_reg, (["out_file", "epi"])),
+        (mean_func_to_anat_reg, out_meanf_to_anat, (["epi2str_mat","in_file"])),                # Export mean func to anat reg matrix
+        (mean_func_to_anat_reg, invert_mean_func_to_anat_mat, (["epi2str.mat", "in_file"])),    # Invert the mean func to anat reg matrix
+        (phase_to_mean_func_reg, prepare_fieldmap, (["out_file", "in_phase"])),                 # Prepare the fieldmap
+        (mag_to_mean_func_reg, prepare_fieldmap, (["out_file", "in_phase"])),
+        (prepare_fieldmap, out_field_map, (["out_fieldmap", "in_file"])),                       # Export the fieldmap
+        (in_functional_image, fugue_correction, (["out_file", "in_file"])),                     # Creating ground truth correction
+        (prepare_fieldmap, fugue_correction, (["out_fieldmap", "in_file"])),
+        (fugue_correction, fugue_skullstrip, (["unwarped_file", "in_file"])),                   # Skullstrip unwarped func
+        (fugue_skullstrip, out_b0_u, (["out_file", "in_file"])),                                # Export the skullstripped unwarped output
+        (func_skullstrip, out_b0_d, (["out_file", "in_file"])),                                 # Export non-corrected func image
+        (func_skullstrip, out_b0_mask, (["out_mask", "in_file"])),                              # Export the functional image mask
+        (anat_skullstrip, intensity_normalize_anat, (["out_file", "in_file"])),                 # Intensity normalizing anatomical
+        (intensity_normalize_anat, transform_anat, (["out_file", "in_file"])),                  # Transform anatomical image
+        (fugue_skullstrip, transform_anat, (["out_file", "reference"])),
+        (invert_mean_func_to_anat_mat, transform_anat, (["out_file", "in_matrix_file"])),
+        (transform_anat, out_t1w, (["out_file", "in_file"])),                                   # Export t1w image
     ])
-
-
 
     # # Setting up the export nodes for the processed files
     # out_field_map = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "field_map.nii.gz")), clobber=True), name="out_field_map")
@@ -152,82 +148,65 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     # out_b0_u = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_u.nii.gz")), clobber=True), name="out_b0_u")
     # out_t1w = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "T1w.nii.gz")), clobber=True), name="out_t1w")
     # out_mni_warp = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "T1w_to_MNI_warp.nii.gz")), clobber=True), name="out_mni_warp")
-    # out_func_to_struct = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "func2struct.mat")), clobber=True), name="out_func_to_struct")
-
-    # # Skullstripping t1w and magnitude
-    # skullstrip_t1w = Node(fsl.BET(frac=0.5, vertical_gradient=0.0, mask=True), name="skullstrip_t1w")
-    # skullstrip_magnitude = Node(fsl.BET(), name="skullstrip_magnitude")
-    # # Removes edge artifacts
-    # erode_magnitude = Node(fsl.maths.ErodeImage(), name="erode_magnitude")
-    # # Node that runs the prepare fieldmap fsl command
-    # prepare_fieldmap = Node(fsl.PrepareFieldmap(delta_TE=2.46), name="prepare_fieldmap")
     # # Find bold image median time index, perform single extraction, median 10 step extraction
     # median_tf = Node(Function(function=GetMedianTF, input_names=["in_file"], output_names=["out_value"]), name="median_tf")
     # extract_roi_functional = Node(fsl.ExtractROI(t_size=1), name="extract_roi_functional")
     # median_tf_minus_five = Node(Function(function=SubtractFive, input_names=["in_value"], output_names=["out_value"]), name="median_tf_minus_five")
+
     # extract_roi_functional_10 = Node(fsl.ExtractROI(t_size=10), name="extract_roi_functional_10")
-    # # Node for performing the fugue correction
-    # fugue_correction = Node(fsl.FUGUE(dwell_time=dataset["echospacing"], smooth3d=3, unwarp_direction="y-"), name="fugue_correction")
-    # # Register epi to t1w and compute inverse registration matrix
-    # register_functional_to_t1 = Node(fsl.epi.EpiReg(), name="register_functional_to_t1")
-    # invert_registration_matrix = Node(fsl.utils.ConvertXFM(invert_xfm=True), name="invert_registration_matrix")
+
+
+
+    # 
+
     # # Skullstripping bold time series, unwarped functional image, transform to t1, t1 intensity normalization
+
     # skullstrip_functional_10 = Node(fsl.BET(functional=True, mask=True), name="skullstrip_functional_10")
     # skullstrip_unwarped_functional = Node(fsl.BET(functional=True), name="skullstrip_unwarped_functional")
+    
     # transform_t1 = Node(fsl.FLIRT(apply_xfm=True), name="transform_t1")
+
     # intensity_normalize_t1 = Node(Function(function=IntensityNormalization, input_names=["in_file"], output_names=["out_file"]), name="intensity_normalize_t1")
+
     # # Affine and non-linear registration to MNI atlas space
+
     # transform_t1_to_mni = Node(fsl.FLIRT(dof=12, reference=f"{FSL_DIR}/data/standard/MNI152_T1_2mm_brain.nii.gz"), name="transform_t1_to_mni")
+
     # register_t1_to_mni = Node(fsl.FNIRT(config_file="T1_2_MNI152_2mm", ref_file=f"{FSL_DIR}/data/standard/MNI152_T1_2mm_brain.nii.gz", field_file=True), name="register_t1_to_mni")
 
     # # Defining the workflow
-    # workflow = Workflow(name="prepare_subject")
-    # # Skullstripping and eroding the magnitude image
-    # workflow.connect(in_magnitude_image, "out_file", skullstrip_magnitude, "in_file")
-    # workflow.connect(skullstrip_magnitude, "out_file", erode_magnitude, "in_file")
-    # # Preparing the fieldmap using the fsl preparefieldmap commnand
-    # workflow.connect(erode_magnitude, "out_file", prepare_fieldmap, "in_magnitude")
-    # workflow.connect(in_phase_image, "out_file", prepare_fieldmap, "in_phase")
-    # workflow.connect(prepare_fieldmap, "out_fieldmap", out_field_map, "in_file")
     # # Computing the median and time sequence for the functional images
-    # workflow.connect(in_functional_image, "out_file", median_tf, "in_file")
-    # workflow.connect(in_functional_image, "out_file", extract_roi_functional, "in_file")
-    # workflow.connect(in_functional_image, "out_file", extract_roi_functional_10, "in_file")
-    # workflow.connect(median_tf, "out_value", extract_roi_functional, "t_min")
-    # workflow.connect(median_tf, "out_value", median_tf_minus_five, "in_value")
-    # workflow.connect(median_tf_minus_five, "out_value", extract_roi_functional_10, "t_min")
     # # Perform the fugue correction
-    # workflow.connect(extract_roi_functional_10, "roi_file", fugue_correction, "in_file")
-    # workflow.connect(prepare_fieldmap, "out_fieldmap", fugue_correction, "fmap_in_file")
     # # Functional to t1w registration preparation
-    # workflow.connect(extract_roi_functional, "roi_file", register_functional_to_t1, "epi")
     # # Skullstripping t1w image and registrering the epi
-    # workflow.connect(in_anatomical_image, "out_file", skullstrip_t1w, "in_file")
-    # workflow.connect(skullstrip_t1w, "out_file", register_functional_to_t1, "t1_brain")
-    # workflow.connect(in_anatomical_image, "out_file", register_functional_to_t1, "t1_head")
-    # # Functional to anatomical transofrmation matrix exported, and inverse is computed
-    # workflow.connect(register_functional_to_t1, "epi2str_mat", out_func_to_struct, "in_file")
-    # workflow.connect(register_functional_to_t1, "epi2str_mat", invert_registration_matrix, "in_file")
+
+
     # # 10 volumne BOLD is skullstripped (distorted) and exported, the bain mask from it is exported
     # workflow.connect(extract_roi_functional_10, "roi_file", skullstrip_functional_10, "in_file")
     # workflow.connect(skullstrip_functional_10, "out_file", out_b0_d, "in_file")
     # workflow.connect(skullstrip_functional_10, "mask_file", out_b0_mask, "in_file")
+    
     # # Skullstripping the fugue corrected functional image, and exporting the output
     # workflow.connect(fugue_correction, "unwarped_file", skullstrip_unwarped_functional, "in_file")
     # workflow.connect(skullstrip_unwarped_functional, "out_file", out_b0_u, "in_file")
+    
     # # Intensity normalizing the T1 image, transform it to functional space, skullstripped undistorted is used as t1 reference
     # workflow.connect(skullstrip_t1w, "out_file", intensity_normalize_t1, "in_file")
     # workflow.connect(intensity_normalize_t1, "out_file", transform_t1, "in_file")
     # workflow.connect(skullstrip_unwarped_functional, "out_file", transform_t1, "reference")
+   
     # # Inverse registration matrix is used to map t1 to functional space, resampled t1 is exported
     # workflow.connect(invert_registration_matrix, "out_file", transform_t1, "in_matrix_file")
     # workflow.connect(transform_t1, "out_file", out_t1w, "in_file")
+   
     # # Normalized t1 used for both affine transformation and nonlinear registration
     # workflow.connect(intensity_normalize_t1, "out_file", transform_t1_to_mni, "in_file")
     # workflow.connect(intensity_normalize_t1, "out_file", register_t1_to_mni, "in_file")
+   
     # # Affine transformation matrix from FLIRT, nonlinear warp field is exported
     # workflow.connect(transform_t1_to_mni, "out_matrix_file", register_t1_to_mni, "affine_file")
     # workflow.connect(register_t1_to_mni, "field_file", out_mni_warp, "in_file")
+   
     # # Run the entire workflow
     # workflow.run()
 
