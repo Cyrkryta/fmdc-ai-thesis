@@ -1,19 +1,14 @@
 from torchview import draw_graph
-from torchviz import make_dot
 
 from project.models.unet3d_direct import UNet3DDirect
 from project.models.unet3d_fieldmap import UNet3DFieldmap
 
 def _plot_model_graph(model, name):
-    # model_graph = draw_graph(model, input_size=(1, 2, 36, 64, 64), device='meta')
-    # graph = model_graph.visual_graph
-    # graph_pdf = graph.pipe(format='pdf')
+    model_graph = draw_graph(model, input_size=(1, 2, 36, 64, 64), device='meta')
+    graph = model_graph.visual_graph
+    graph_pdf = graph.pipe(format='pdf')
 
-    x = (1, 2, 36, 64, 64)
-    y = model(x)
-    graph_pdf = make_dot(y.mean(), params=dict(model.named_parameters()))
-
-    with open(f'/student/magnuschristensen/dev/fmdc/visualizations/model-graph-{name}-torchviz.pdf', 'wb') as f:
+    with open(f'/home/mlc/dev/fmdc/visualizations/model-graph-{name}-torchview.pdf', 'wb') as f:
         f.write(graph_pdf)
 
 
