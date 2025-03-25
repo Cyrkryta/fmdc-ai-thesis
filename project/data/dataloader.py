@@ -116,32 +116,6 @@ def collate_fn(batch):
     # Return the new collate
     return collated
 
-
-        # Retrieve the distorted EPI image and fieldmap image
-        # b0u_img = b0_u[0]
-        # fieldmap_img = fieldmap[0]
-
-        # # Check if the fieldmap and distorted epi image has similar dimensions
-        # if fieldmap_img.shape != b0u_img.shape:
-        #     # If the shapes doesn't fit, resample fieldmap to epi space
-        #     # Retrieve the nifti images
-        #     b0u_nifti = data_util.get_nifti_image(b0u_img, b0u_affine)
-        #     fieldmap_nifti = data_util.get_nifti_image(fieldmap_img, fieldmap_affine)
-
-        #     # Resample the fieldmap image
-        #     fieldmap_nifti_resampled = data_util.resample_image(fieldmap_nifti, b0u_nifti.affine, b0u_nifti.shape)
-
-        #     # Get Resampled image data again
-        #     fieldmap_nifti_resampled_data = fieldmap_nifti_resampled.get_fdata()
-        #     fieldmap_resampled_img = torch.tensor(fieldmap_nifti_resampled_data, dtype=torch.float32).unsqueeze(0)
-        # else:
-        #     fieldmap_resampled_img = fieldmap
-
-            # print(f"\nb0d_img shape: {b0d_img.shape}")
-            # print(f"fieldmap img shape: {fieldmap_img.shape}")
-            # print(f"fieldmap resampled img shape: {fieldmap_resampled_img.shape}")
-
-
 """
 Function for creating the dataloaders
 """
@@ -170,13 +144,3 @@ def create_dataloaders(batch_size: int):
 
     # Returning
     return train_dataloader, val_dataloader, test_dataloader
-
-    # def train_dataloader(self):
-    #     return DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=2, shuffle=True, collate_fn=collate_fn, persistent_workers=True)
-
-    # def val_dataloader(self):
-    #     return DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=1, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
-
-    # def test_dataloader(self):
-    #     return DataLoader(self.test_dataset, batch_size=self.BATCH_SIZE, num_workers=0, shuffle=False, collate_fn=collate_fn, persistent_workers=True)
-

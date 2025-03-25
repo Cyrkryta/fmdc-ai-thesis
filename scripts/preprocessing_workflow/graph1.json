@@ -35,9 +35,10 @@
                 29,
                 30,
                 31,
-                32
+                32,
+                33
             ],
-            "total": 33
+            "total": 34
         }
     ],
     "links": [
@@ -49,6 +50,11 @@
         {
             "source": 4,
             "target": 7,
+            "value": 1
+        },
+        {
+            "source": 7,
+            "target": 12,
             "value": 1
         },
         {
@@ -73,7 +79,57 @@
         },
         {
             "source": 4,
-            "target": 21,
+            "target": 22,
+            "value": 1
+        },
+        {
+            "source": 14,
+            "target": 22,
+            "value": 1
+        },
+        {
+            "source": 8,
+            "target": 14,
+            "value": 1
+        },
+        {
+            "source": 22,
+            "target": 25,
+            "value": 1
+        },
+        {
+            "source": 25,
+            "target": 29,
+            "value": 1
+        },
+        {
+            "source": 11,
+            "target": 18,
+            "value": 1
+        },
+        {
+            "source": 7,
+            "target": 18,
+            "value": 1
+        },
+        {
+            "source": 1,
+            "target": 13,
+            "value": 1
+        },
+        {
+            "source": 5,
+            "target": 13,
+            "value": 1
+        },
+        {
+            "source": 7,
+            "target": 13,
+            "value": 1
+        },
+        {
+            "source": 13,
+            "target": 20,
             "value": 1
         },
         {
@@ -82,13 +138,38 @@
             "value": 1
         },
         {
-            "source": 8,
-            "target": 13,
+            "source": 3,
+            "target": 19,
             "value": 1
         },
         {
-            "source": 21,
+            "source": 11,
+            "target": 19,
+            "value": 1
+        },
+        {
+            "source": 19,
             "target": 24,
+            "value": 1
+        },
+        {
+            "source": 18,
+            "target": 24,
+            "value": 1
+        },
+        {
+            "source": 7,
+            "target": 24,
+            "value": 1
+        },
+        {
+            "source": 24,
+            "target": 27,
+            "value": 1
+        },
+        {
+            "source": 4,
+            "target": 28,
             "value": 1
         },
         {
@@ -97,88 +178,13 @@
             "value": 1
         },
         {
-            "source": 11,
-            "target": 17,
-            "value": 1
-        },
-        {
-            "source": 7,
-            "target": 17,
-            "value": 1
-        },
-        {
-            "source": 1,
-            "target": 12,
-            "value": 1
-        },
-        {
-            "source": 5,
-            "target": 12,
-            "value": 1
-        },
-        {
-            "source": 7,
-            "target": 12,
-            "value": 1
-        },
-        {
-            "source": 12,
-            "target": 19,
-            "value": 1
-        },
-        {
-            "source": 12,
-            "target": 20,
-            "value": 1
-        },
-        {
-            "source": 3,
-            "target": 18,
-            "value": 1
-        },
-        {
-            "source": 11,
-            "target": 18,
-            "value": 1
-        },
-        {
-            "source": 18,
-            "target": 23,
-            "value": 1
-        },
-        {
-            "source": 17,
-            "target": 23,
-            "value": 1
-        },
-        {
-            "source": 7,
-            "target": 23,
-            "value": 1
-        },
-        {
-            "source": 23,
-            "target": 26,
-            "value": 1
-        },
-        {
-            "source": 4,
-            "target": 27,
-            "value": 1
-        },
-        {
-            "source": 23,
-            "target": 27,
-            "value": 1
-        },
-        {
-            "source": 27,
-            "target": 29,
-            "value": 1
-        },
-        {
-            "source": 29,
+            "source": 28,
             "target": 30,
+            "value": 1
+        },
+        {
+            "source": 30,
+            "target": 31,
             "value": 1
         },
         {
@@ -188,12 +194,12 @@
         },
         {
             "source": 9,
-            "target": 14,
+            "target": 15,
             "value": 1
         },
         {
             "source": 9,
-            "target": 15,
+            "target": 16,
             "value": 1
         },
         {
@@ -203,244 +209,250 @@
         },
         {
             "source": 10,
-            "target": 31,
-            "value": 1
-        },
-        {
-            "source": 29,
-            "target": 31,
-            "value": 1
-        },
-        {
-            "source": 20,
-            "target": 31,
-            "value": 1
-        },
-        {
-            "source": 31,
             "target": 32,
             "value": 1
         },
         {
-            "source": 10,
-            "target": 16,
+            "source": 30,
+            "target": 32,
+            "value": 1
+        },
+        {
+            "source": 21,
+            "target": 32,
+            "value": 1
+        },
+        {
+            "source": 32,
+            "target": 33,
             "value": 1
         },
         {
             "source": 10,
-            "target": 22,
+            "target": 17,
             "value": 1
         },
         {
-            "source": 16,
-            "target": 22,
+            "source": 10,
+            "target": 23,
             "value": 1
         },
         {
-            "source": 22,
-            "target": 25,
+            "source": 17,
+            "target": 23,
+            "value": 1
+        },
+        {
+            "source": 23,
+            "target": 26,
             "value": 1
         }
     ],
-    "maxN": 33,
+    "maxN": 34,
     "nodes": [
         {
             "group": 1,
             "name": "0_in_functional_image",
-            "report": "/tmp/tmpg1mh19yi/preprocessing_workflow/in_functional_image/_report/report.rst",
-            "result": "/tmp/tmpg1mh19yi/preprocessing_workflow/in_functional_image/result_in_functional_image.pklz"
+            "report": "/tmp/tmpkgzntf9x/preprocessing_workflow/in_functional_image/_report/report.rst",
+            "result": "/tmp/tmpkgzntf9x/preprocessing_workflow/in_functional_image/result_in_functional_image.pklz"
         },
         {
             "group": 1,
             "name": "1_in_anatomical_image",
-            "report": "/tmp/tmpylhylvzh/preprocessing_workflow/in_anatomical_image/_report/report.rst",
-            "result": "/tmp/tmpylhylvzh/preprocessing_workflow/in_anatomical_image/result_in_anatomical_image.pklz"
+            "report": "/tmp/tmpps5xf5u_/preprocessing_workflow/in_anatomical_image/_report/report.rst",
+            "result": "/tmp/tmpps5xf5u_/preprocessing_workflow/in_anatomical_image/result_in_anatomical_image.pklz"
         },
         {
             "group": 1,
             "name": "2_in_magnitude_image",
-            "report": "/tmp/tmpa52r8wvq/preprocessing_workflow/in_magnitude_image/_report/report.rst",
-            "result": "/tmp/tmpa52r8wvq/preprocessing_workflow/in_magnitude_image/result_in_magnitude_image.pklz"
+            "report": "/tmp/tmpjl6n1lb6/preprocessing_workflow/in_magnitude_image/_report/report.rst",
+            "result": "/tmp/tmpjl6n1lb6/preprocessing_workflow/in_magnitude_image/result_in_magnitude_image.pklz"
         },
         {
             "group": 1,
             "name": "3_in_phase_image",
-            "report": "/tmp/tmperedu96_/preprocessing_workflow/in_phase_image/_report/report.rst",
-            "result": "/tmp/tmperedu96_/preprocessing_workflow/in_phase_image/result_in_phase_image.pklz"
+            "report": "/tmp/tmp4oegq8vv/preprocessing_workflow/in_phase_image/_report/report.rst",
+            "result": "/tmp/tmp4oegq8vv/preprocessing_workflow/in_phase_image/result_in_phase_image.pklz"
         },
         {
             "group": 1,
             "name": "4_func_motion_correct",
-            "report": "/tmp/tmp7jmgavcn/preprocessing_workflow/func_motion_correct/_report/report.rst",
-            "result": "/tmp/tmp7jmgavcn/preprocessing_workflow/func_motion_correct/result_func_motion_correct.pklz"
+            "report": "/tmp/tmpv8dzqut7/preprocessing_workflow/func_motion_correct/_report/report.rst",
+            "result": "/tmp/tmpv8dzqut7/preprocessing_workflow/func_motion_correct/result_func_motion_correct.pklz"
         },
         {
             "group": 1,
             "name": "5_anat_skullstrip",
-            "report": "/tmp/tmpmh613j7q/preprocessing_workflow/anat_skullstrip/_report/report.rst",
-            "result": "/tmp/tmpmh613j7q/preprocessing_workflow/anat_skullstrip/result_anat_skullstrip.pklz"
+            "report": "/tmp/tmpm7_ey_1l/preprocessing_workflow/anat_skullstrip/_report/report.rst",
+            "result": "/tmp/tmpm7_ey_1l/preprocessing_workflow/anat_skullstrip/result_anat_skullstrip.pklz"
         },
         {
             "group": 1,
             "name": "6_mag_skullstrip",
-            "report": "/tmp/tmp_vyl0izp/preprocessing_workflow/mag_skullstrip/_report/report.rst",
-            "result": "/tmp/tmp_vyl0izp/preprocessing_workflow/mag_skullstrip/result_mag_skullstrip.pklz"
+            "report": "/tmp/tmpvg39lnvt/preprocessing_workflow/mag_skullstrip/_report/report.rst",
+            "result": "/tmp/tmpvg39lnvt/preprocessing_workflow/mag_skullstrip/result_mag_skullstrip.pklz"
         },
         {
             "group": 1,
             "name": "7_mean_func",
-            "report": "/tmp/tmp8rl6jizb/preprocessing_workflow/mean_func/_report/report.rst",
-            "result": "/tmp/tmp8rl6jizb/preprocessing_workflow/mean_func/result_mean_func.pklz"
+            "report": "/tmp/tmposty62s9/preprocessing_workflow/mean_func/_report/report.rst",
+            "result": "/tmp/tmposty62s9/preprocessing_workflow/mean_func/result_mean_func.pklz"
         },
         {
             "group": 1,
             "name": "8_median_tf",
-            "report": "/tmp/tmp1a1_h7ce/preprocessing_workflow/median_tf/_report/report.rst",
-            "result": "/tmp/tmp1a1_h7ce/preprocessing_workflow/median_tf/result_median_tf.pklz"
+            "report": "/tmp/tmpvztqzjx2/preprocessing_workflow/median_tf/_report/report.rst",
+            "result": "/tmp/tmpvztqzjx2/preprocessing_workflow/median_tf/result_median_tf.pklz"
         },
         {
             "group": 1,
             "name": "9_func_skullstrip",
-            "report": "/tmp/tmpyo6rzqqe/preprocessing_workflow/func_skullstrip/_report/report.rst",
-            "result": "/tmp/tmpyo6rzqqe/preprocessing_workflow/func_skullstrip/result_func_skullstrip.pklz"
+            "report": "/tmp/tmp0xgw1h8i/preprocessing_workflow/func_skullstrip/_report/report.rst",
+            "result": "/tmp/tmp0xgw1h8i/preprocessing_workflow/func_skullstrip/result_func_skullstrip.pklz"
         },
         {
             "group": 1,
             "name": "10_intensity_normalize_anat",
-            "report": "/tmp/tmp_spt5ise/preprocessing_workflow/intensity_normalize_anat/_report/report.rst",
-            "result": "/tmp/tmp_spt5ise/preprocessing_workflow/intensity_normalize_anat/result_intensity_normalize_anat.pklz"
+            "report": "/tmp/tmpuh6h9qgq/preprocessing_workflow/intensity_normalize_anat/_report/report.rst",
+            "result": "/tmp/tmpuh6h9qgq/preprocessing_workflow/intensity_normalize_anat/result_intensity_normalize_anat.pklz"
         },
         {
             "group": 1,
             "name": "11_mag_erode",
-            "report": "/tmp/tmpepugfplk/preprocessing_workflow/mag_erode/_report/report.rst",
-            "result": "/tmp/tmpepugfplk/preprocessing_workflow/mag_erode/result_mag_erode.pklz"
+            "report": "/tmp/tmpcuyf2xpn/preprocessing_workflow/mag_erode/_report/report.rst",
+            "result": "/tmp/tmpcuyf2xpn/preprocessing_workflow/mag_erode/result_mag_erode.pklz"
         },
         {
             "group": 1,
-            "name": "12_mean_func_to_anat_reg",
-            "report": "/tmp/tmpv0mtly7s/preprocessing_workflow/mean_func_to_anat_reg/_report/report.rst",
-            "result": "/tmp/tmpv0mtly7s/preprocessing_workflow/mean_func_to_anat_reg/result_mean_func_to_anat_reg.pklz"
+            "name": "12_out_b0_d_mean",
+            "report": "/tmp/tmpo0pv3fvu/preprocessing_workflow/out_b0_d_mean/_report/report.rst",
+            "result": "/tmp/tmpo0pv3fvu/preprocessing_workflow/out_b0_d_mean/result_out_b0_d_mean.pklz"
         },
         {
             "group": 1,
-            "name": "13_median_tf_minus_five",
-            "report": "/tmp/tmpecoep1i9/preprocessing_workflow/median_tf_minus_five/_report/report.rst",
-            "result": "/tmp/tmpecoep1i9/preprocessing_workflow/median_tf_minus_five/result_median_tf_minus_five.pklz"
+            "name": "13_mean_func_to_anat_reg",
+            "report": "/tmp/tmp_v_jbm0b/preprocessing_workflow/mean_func_to_anat_reg/_report/report.rst",
+            "result": "/tmp/tmp_v_jbm0b/preprocessing_workflow/mean_func_to_anat_reg/result_mean_func_to_anat_reg.pklz"
         },
         {
             "group": 1,
-            "name": "14_out_b0_d",
-            "report": "/tmp/tmpvbxq2_oi/preprocessing_workflow/out_b0_d/_report/report.rst",
-            "result": "/tmp/tmpvbxq2_oi/preprocessing_workflow/out_b0_d/result_out_b0_d.pklz"
+            "name": "14_median_tf_minus_five",
+            "report": "/tmp/tmpwd5315_e/preprocessing_workflow/median_tf_minus_five/_report/report.rst",
+            "result": "/tmp/tmpwd5315_e/preprocessing_workflow/median_tf_minus_five/result_median_tf_minus_five.pklz"
         },
         {
             "group": 1,
-            "name": "15_out_b0_mask",
-            "report": "/tmp/tmppxi8oogl/preprocessing_workflow/out_b0_mask/_report/report.rst",
-            "result": "/tmp/tmppxi8oogl/preprocessing_workflow/out_b0_mask/result_out_b0_mask.pklz"
+            "name": "15_out_b0_d",
+            "report": "/tmp/tmp81_7c9j2/preprocessing_workflow/out_b0_d/_report/report.rst",
+            "result": "/tmp/tmp81_7c9j2/preprocessing_workflow/out_b0_d/result_out_b0_d.pklz"
         },
         {
             "group": 1,
-            "name": "16_transform_t1_to_mni",
-            "report": "/tmp/tmpxy2fbycv/preprocessing_workflow/transform_t1_to_mni/_report/report.rst",
-            "result": "/tmp/tmpxy2fbycv/preprocessing_workflow/transform_t1_to_mni/result_transform_t1_to_mni.pklz"
+            "name": "16_out_b0_mask",
+            "report": "/tmp/tmpzs6sy57t/preprocessing_workflow/out_b0_mask/_report/report.rst",
+            "result": "/tmp/tmpzs6sy57t/preprocessing_workflow/out_b0_mask/result_out_b0_mask.pklz"
         },
         {
             "group": 1,
-            "name": "17_mag_to_mean_func_reg",
-            "report": "/tmp/tmpcybdz5fp/preprocessing_workflow/mag_to_mean_func_reg/_report/report.rst",
-            "result": "/tmp/tmpcybdz5fp/preprocessing_workflow/mag_to_mean_func_reg/result_mag_to_mean_func_reg.pklz"
+            "name": "17_transform_t1_to_mni",
+            "report": "/tmp/tmpqzhsh9ij/preprocessing_workflow/transform_t1_to_mni/_report/report.rst",
+            "result": "/tmp/tmpqzhsh9ij/preprocessing_workflow/transform_t1_to_mni/result_transform_t1_to_mni.pklz"
         },
         {
             "group": 1,
-            "name": "18_prepare_fieldmap",
-            "report": "/tmp/tmpf92kzbgk/preprocessing_workflow/prepare_fieldmap/_report/report.rst",
-            "result": "/tmp/tmpf92kzbgk/preprocessing_workflow/prepare_fieldmap/result_prepare_fieldmap.pklz"
+            "name": "18_mag_to_mean_func_reg",
+            "report": "/tmp/tmpsvkowhtb/preprocessing_workflow/mag_to_mean_func_reg/_report/report.rst",
+            "result": "/tmp/tmpsvkowhtb/preprocessing_workflow/mag_to_mean_func_reg/result_mag_to_mean_func_reg.pklz"
         },
         {
             "group": 1,
-            "name": "19_out_func_to_struct",
-            "report": "/tmp/tmps7qdgutn/preprocessing_workflow/out_func_to_struct/_report/report.rst",
-            "result": "/tmp/tmps7qdgutn/preprocessing_workflow/out_func_to_struct/result_out_func_to_struct.pklz"
+            "name": "19_prepare_fieldmap",
+            "report": "/tmp/tmpyrpnwr3n/preprocessing_workflow/prepare_fieldmap/_report/report.rst",
+            "result": "/tmp/tmpyrpnwr3n/preprocessing_workflow/prepare_fieldmap/result_prepare_fieldmap.pklz"
         },
         {
             "group": 1,
-            "name": "20_invert_mean_func_to_anat_mat",
-            "report": "/tmp/tmp4g9d0ueh/preprocessing_workflow/invert_mean_func_to_anat_mat/_report/report.rst",
-            "result": "/tmp/tmp4g9d0ueh/preprocessing_workflow/invert_mean_func_to_anat_mat/result_invert_mean_func_to_anat_mat.pklz"
+            "name": "20_out_func_to_struct",
+            "report": "/tmp/tmpkafnwcdt/preprocessing_workflow/out_func_to_struct/_report/report.rst",
+            "result": "/tmp/tmpkafnwcdt/preprocessing_workflow/out_func_to_struct/result_out_func_to_struct.pklz"
         },
         {
             "group": 1,
-            "name": "21_extract_roi_func_10",
-            "report": "/tmp/tmpmtmsggm_/preprocessing_workflow/extract_roi_func_10/_report/report.rst",
-            "result": "/tmp/tmpmtmsggm_/preprocessing_workflow/extract_roi_func_10/result_extract_roi_func_10.pklz"
+            "name": "21_invert_mean_func_to_anat_mat",
+            "report": "/tmp/tmpek42lm_s/preprocessing_workflow/invert_mean_func_to_anat_mat/_report/report.rst",
+            "result": "/tmp/tmpek42lm_s/preprocessing_workflow/invert_mean_func_to_anat_mat/result_invert_mean_func_to_anat_mat.pklz"
         },
         {
             "group": 1,
-            "name": "22_register_t1_to_mni",
-            "report": "/tmp/tmphlcvf4vo/preprocessing_workflow/register_t1_to_mni/_report/report.rst",
-            "result": "/tmp/tmphlcvf4vo/preprocessing_workflow/register_t1_to_mni/result_register_t1_to_mni.pklz"
+            "name": "22_extract_roi_func_10",
+            "report": "/tmp/tmpj67rbsca/preprocessing_workflow/extract_roi_func_10/_report/report.rst",
+            "result": "/tmp/tmpj67rbsca/preprocessing_workflow/extract_roi_func_10/result_extract_roi_func_10.pklz"
         },
         {
             "group": 1,
-            "name": "23_fieldmap_to_mean_func_reg",
-            "report": "/tmp/tmp68mv8_qe/preprocessing_workflow/fieldmap_to_mean_func_reg/_report/report.rst",
-            "result": "/tmp/tmp68mv8_qe/preprocessing_workflow/fieldmap_to_mean_func_reg/result_fieldmap_to_mean_func_reg.pklz"
+            "name": "23_register_t1_to_mni",
+            "report": "/tmp/tmp4q8re42j/preprocessing_workflow/register_t1_to_mni/_report/report.rst",
+            "result": "/tmp/tmp4q8re42j/preprocessing_workflow/register_t1_to_mni/result_register_t1_to_mni.pklz"
         },
         {
             "group": 1,
-            "name": "24_func_ex10_skullstrip",
-            "report": "/tmp/tmpyf52gju9/preprocessing_workflow/func_ex10_skullstrip/_report/report.rst",
-            "result": "/tmp/tmpyf52gju9/preprocessing_workflow/func_ex10_skullstrip/result_func_ex10_skullstrip.pklz"
+            "name": "24_fieldmap_to_mean_func_reg",
+            "report": "/tmp/tmplar3lszd/preprocessing_workflow/fieldmap_to_mean_func_reg/_report/report.rst",
+            "result": "/tmp/tmplar3lszd/preprocessing_workflow/fieldmap_to_mean_func_reg/result_fieldmap_to_mean_func_reg.pklz"
         },
         {
             "group": 1,
-            "name": "25_out_mni_warp",
-            "report": "/tmp/tmp6h06mfe1/preprocessing_workflow/out_mni_warp/_report/report.rst",
-            "result": "/tmp/tmp6h06mfe1/preprocessing_workflow/out_mni_warp/result_out_mni_warp.pklz"
+            "name": "25_func_ex10_skullstrip",
+            "report": "/tmp/tmp1a4pqx5h/preprocessing_workflow/func_ex10_skullstrip/_report/report.rst",
+            "result": "/tmp/tmp1a4pqx5h/preprocessing_workflow/func_ex10_skullstrip/result_func_ex10_skullstrip.pklz"
         },
         {
             "group": 1,
-            "name": "26_out_field_map",
-            "report": "/tmp/tmp7pv24w6a/preprocessing_workflow/out_field_map/_report/report.rst",
-            "result": "/tmp/tmp7pv24w6a/preprocessing_workflow/out_field_map/result_out_field_map.pklz"
+            "name": "26_out_mni_warp",
+            "report": "/tmp/tmpr5g45js9/preprocessing_workflow/out_mni_warp/_report/report.rst",
+            "result": "/tmp/tmpr5g45js9/preprocessing_workflow/out_mni_warp/result_out_mni_warp.pklz"
         },
         {
             "group": 1,
-            "name": "27_fugue_correction",
-            "report": "/tmp/tmpa0za0xka/preprocessing_workflow/fugue_correction/_report/report.rst",
-            "result": "/tmp/tmpa0za0xka/preprocessing_workflow/fugue_correction/result_fugue_correction.pklz"
+            "name": "27_out_field_map",
+            "report": "/tmp/tmp23n2aq6c/preprocessing_workflow/out_field_map/_report/report.rst",
+            "result": "/tmp/tmp23n2aq6c/preprocessing_workflow/out_field_map/result_out_field_map.pklz"
         },
         {
             "group": 1,
-            "name": "28_out_b0_d_10",
-            "report": "/tmp/tmp593n0b1k/preprocessing_workflow/out_b0_d_10/_report/report.rst",
-            "result": "/tmp/tmp593n0b1k/preprocessing_workflow/out_b0_d_10/result_out_b0_d_10.pklz"
+            "name": "28_fugue_correction",
+            "report": "/tmp/tmpbszprv3b/preprocessing_workflow/fugue_correction/_report/report.rst",
+            "result": "/tmp/tmpbszprv3b/preprocessing_workflow/fugue_correction/result_fugue_correction.pklz"
         },
         {
             "group": 1,
-            "name": "29_fugue_skullstrip",
-            "report": "/tmp/tmpnbsjnpi8/preprocessing_workflow/fugue_skullstrip/_report/report.rst",
-            "result": "/tmp/tmpnbsjnpi8/preprocessing_workflow/fugue_skullstrip/result_fugue_skullstrip.pklz"
+            "name": "29_out_b0_d_10",
+            "report": "/tmp/tmphv78ylf2/preprocessing_workflow/out_b0_d_10/_report/report.rst",
+            "result": "/tmp/tmphv78ylf2/preprocessing_workflow/out_b0_d_10/result_out_b0_d_10.pklz"
         },
         {
             "group": 1,
-            "name": "30_out_b0_u",
-            "report": "/tmp/tmpxe2niwtl/preprocessing_workflow/out_b0_u/_report/report.rst",
-            "result": "/tmp/tmpxe2niwtl/preprocessing_workflow/out_b0_u/result_out_b0_u.pklz"
+            "name": "30_fugue_skullstrip",
+            "report": "/tmp/tmppe3522fl/preprocessing_workflow/fugue_skullstrip/_report/report.rst",
+            "result": "/tmp/tmppe3522fl/preprocessing_workflow/fugue_skullstrip/result_fugue_skullstrip.pklz"
         },
         {
             "group": 1,
-            "name": "31_transform_anat",
-            "report": "/tmp/tmpv0bbjrr3/preprocessing_workflow/transform_anat/_report/report.rst",
-            "result": "/tmp/tmpv0bbjrr3/preprocessing_workflow/transform_anat/result_transform_anat.pklz"
+            "name": "31_out_b0_u",
+            "report": "/tmp/tmpzxu24juo/preprocessing_workflow/out_b0_u/_report/report.rst",
+            "result": "/tmp/tmpzxu24juo/preprocessing_workflow/out_b0_u/result_out_b0_u.pklz"
         },
         {
             "group": 1,
-            "name": "32_out_t1w",
-            "report": "/tmp/tmp2pxm0_8b/preprocessing_workflow/out_t1w/_report/report.rst",
-            "result": "/tmp/tmp2pxm0_8b/preprocessing_workflow/out_t1w/result_out_t1w.pklz"
+            "name": "32_transform_anat",
+            "report": "/tmp/tmp7rup_8z_/preprocessing_workflow/transform_anat/_report/report.rst",
+            "result": "/tmp/tmp7rup_8z_/preprocessing_workflow/transform_anat/result_transform_anat.pklz"
+        },
+        {
+            "group": 1,
+            "name": "33_out_t1w",
+            "report": "/tmp/tmppy4u27yl/preprocessing_workflow/out_t1w/_report/report.rst",
+            "result": "/tmp/tmppy4u27yl/preprocessing_workflow/out_t1w/result_out_t1w.pklz"
         }
     ]
 }

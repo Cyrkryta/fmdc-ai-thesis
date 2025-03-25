@@ -91,17 +91,6 @@ class UNet3DFieldmap(pl.LightningModule):
         # Return the loss
         return val_loss
 
-        # img, b0_u, mask, fieldmap, affine, echo_spacing = batch
-        # Compute the fieldmap estimate and loss
-        # out = self(img)
-        # loss = self.compute_loss(out, fieldmap)
-        # Log the loss
-        # self.log("val_loss", loss)
-        # Log image to W&B if true
-        # if batch_idx == 0:
-            # self._log_images(out, img, b0_u, mask, fieldmap, affine, echo_spacing)
-        # Return the loss
-        # return loss
 
     # Undistort b0
     def _undistort_b0(self, b0_d, fieldmap, affine_b0d, affine_fieldmap, echo_spacing):
@@ -149,7 +138,7 @@ class UNet3DFieldmap(pl.LightningModule):
         # Retriieve the sampled images
         t1 = img[sample_idx][1][slice_idx]
         b0_d = img[sample_idx][0][slice_idx]
-        b0_u = b0_u[sample_idx][0][slice_idx]
+        # b0_u = b0_u[sample_idx][0][slice_idx]
         fieldmap = fieldmap[sample_idx][0][slice_idx]
         affine = affine[sample_idx]
         echo_spacing = echo_spacing[sample_idx]
@@ -159,7 +148,7 @@ class UNet3DFieldmap(pl.LightningModule):
             'epoch': self.current_epoch,
             't1': wandb.Image(t1, caption="T1w"),
             'b0_d': wandb.Image(b0_d, caption="B0 Distorted"),
-            'b0_u': wandb.Image(b0_u, caption="Ground Truth (B0 Undistorted)"),
+            # 'b0_u': wandb.Image(b0_u, caption="Ground Truth (B0 Undistorted)"),
             'fieldmap': wandb.Image(fieldmap, caption="Ground Truth Fieldmap"),
             'out': wandb.Image(out[sample_idx][0][slice_idx], caption="Model Output Fieldmap")
         })

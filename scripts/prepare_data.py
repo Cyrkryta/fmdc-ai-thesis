@@ -80,7 +80,7 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     out_b0_d = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_d.nii.gz")), clobber=True), name="out_b0_d")
     out_b0_mask = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_mask.nii.gz")), clobber=True), name="out_b0_mask")
     out_b0_u = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_u.nii.gz")), clobber=True), name="out_b0_u")
-    out_b0_d_mean = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_d_mean.nii.gz")), clobber=True), name="out_b0_d")
+    out_b0_d_mean = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_d_mean.nii.gz")), clobber=True), name="out_b0_d_mean")
     out_t1w = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "T1w.nii.gz")), clobber=True), name="out_t1w")
     out_b0_d_10 = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "b0_d_10.nii.gz")), clobber=True), name="out_b0_d_10")
     out_mni_warp = Node(nio.ExportFile(out_file=abspath(os.path.join(output_dir, "T1w_to_MNI_warp.nii.gz")), clobber=True), name="out_mni_warp")
@@ -89,8 +89,8 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     # functional image motion correction
     func_motion_correct = Node(fsl.MCFLIRT(), name="func_motion_correct")
     # Skullstripping and magnitude erode
-    anat_skullstrip = Node(fsl.BET(frac=0.5, vertical_gradient=0.0, mask=True), name="anat_skullstrip")
-    mag_skullstrip = Node(fsl.BET(frac=0.5, vertical_gradient=0.0, mask=True), name="mag_skullstrip")
+    anat_skullstrip = Node(fsl.BET(frac=0.7, vertical_gradient=0.0, mask=True), name="anat_skullstrip")
+    mag_skullstrip = Node(fsl.BET(frac=0.7, vertical_gradient=0.0, mask=True), name="mag_skullstrip")
     mag_erode = Node(fsl.maths.ErodeImage(), name="mag_erode")
     # Mean Image
     mean_func = Node(fsl.maths.MeanImage(dimension="T"), name="mean_func")
@@ -122,9 +122,9 @@ def _convert_subject(SUBJECT_INPUT_PATH: str, dataset, FSL_DIR: str):
     # Extract 10 skullstrip
     func_ex10_skullstrip = Node(fsl.BET(functional=True, mask=True), name="func_ex10_skullstrip")
 
-    """ Workflow """
-    # Define workflow
-    preprocessing_workflow = Workflow(name="preprocessing_workflow")
+    # """ Workflow """
+    # # Define workflow
+    # preprocessing_workflow = Workflow(name="preprocessing_workflow")
 
     """ Workflow """
     # Define workflow

@@ -90,11 +90,19 @@
     {
         "group": 1,
         "imports": [
+            "07_mean_func"
+        ],
+        "name": "12_out_b0_d_mean",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
             "01_in_anatomical_image",
             "05_anat_skullstrip",
             "07_mean_func"
         ],
-        "name": "12_mean_func_to_anat_reg",
+        "name": "13_mean_func_to_anat_reg",
         "size": 1
     },
     {
@@ -102,7 +110,7 @@
         "imports": [
             "08_median_tf"
         ],
-        "name": "13_median_tf_minus_five",
+        "name": "14_median_tf_minus_five",
         "size": 1
     },
     {
@@ -110,7 +118,7 @@
         "imports": [
             "09_func_skullstrip"
         ],
-        "name": "14_out_b0_d",
+        "name": "15_out_b0_d",
         "size": 1
     },
     {
@@ -118,7 +126,7 @@
         "imports": [
             "09_func_skullstrip"
         ],
-        "name": "15_out_b0_mask",
+        "name": "16_out_b0_mask",
         "size": 1
     },
     {
@@ -126,7 +134,7 @@
         "imports": [
             "10_intensity_normalize_anat"
         ],
-        "name": "16_transform_t1_to_mni",
+        "name": "17_transform_t1_to_mni",
         "size": 1
     },
     {
@@ -135,7 +143,7 @@
             "11_mag_erode",
             "07_mean_func"
         ],
-        "name": "17_mag_to_mean_func_reg",
+        "name": "18_mag_to_mean_func_reg",
         "size": 1
     },
     {
@@ -144,126 +152,126 @@
             "03_in_phase_image",
             "11_mag_erode"
         ],
-        "name": "18_prepare_fieldmap",
+        "name": "19_prepare_fieldmap",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "12_mean_func_to_anat_reg"
+            "13_mean_func_to_anat_reg"
         ],
-        "name": "19_out_func_to_struct",
+        "name": "20_out_func_to_struct",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "12_mean_func_to_anat_reg"
+            "13_mean_func_to_anat_reg"
         ],
-        "name": "20_invert_mean_func_to_anat_mat",
+        "name": "21_invert_mean_func_to_anat_mat",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
             "04_func_motion_correct",
-            "13_median_tf_minus_five"
+            "14_median_tf_minus_five"
         ],
-        "name": "21_extract_roi_func_10",
+        "name": "22_extract_roi_func_10",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
             "10_intensity_normalize_anat",
-            "16_transform_t1_to_mni"
+            "17_transform_t1_to_mni"
         ],
-        "name": "22_register_t1_to_mni",
+        "name": "23_register_t1_to_mni",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "18_prepare_fieldmap",
-            "17_mag_to_mean_func_reg",
+            "19_prepare_fieldmap",
+            "18_mag_to_mean_func_reg",
             "07_mean_func"
         ],
-        "name": "23_fieldmap_to_mean_func_reg",
+        "name": "24_fieldmap_to_mean_func_reg",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "21_extract_roi_func_10"
+            "22_extract_roi_func_10"
         ],
-        "name": "24_func_ex10_skullstrip",
+        "name": "25_func_ex10_skullstrip",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "22_register_t1_to_mni"
+            "23_register_t1_to_mni"
         ],
-        "name": "25_out_mni_warp",
+        "name": "26_out_mni_warp",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "23_fieldmap_to_mean_func_reg"
+            "24_fieldmap_to_mean_func_reg"
         ],
-        "name": "26_out_field_map",
+        "name": "27_out_field_map",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
             "04_func_motion_correct",
-            "23_fieldmap_to_mean_func_reg"
+            "24_fieldmap_to_mean_func_reg"
         ],
-        "name": "27_fugue_correction",
+        "name": "28_fugue_correction",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "24_func_ex10_skullstrip"
+            "25_func_ex10_skullstrip"
         ],
-        "name": "28_out_b0_d_10",
+        "name": "29_out_b0_d_10",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "27_fugue_correction"
+            "28_fugue_correction"
         ],
-        "name": "29_fugue_skullstrip",
+        "name": "30_fugue_skullstrip",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "29_fugue_skullstrip"
+            "30_fugue_skullstrip"
         ],
-        "name": "30_out_b0_u",
+        "name": "31_out_b0_u",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
             "10_intensity_normalize_anat",
-            "29_fugue_skullstrip",
-            "20_invert_mean_func_to_anat_mat"
+            "30_fugue_skullstrip",
+            "21_invert_mean_func_to_anat_mat"
         ],
-        "name": "31_transform_anat",
+        "name": "32_transform_anat",
         "size": 1
     },
     {
         "group": 1,
         "imports": [
-            "31_transform_anat"
+            "32_transform_anat"
         ],
-        "name": "32_out_t1w",
+        "name": "33_out_t1w",
         "size": 1
     }
 ]
