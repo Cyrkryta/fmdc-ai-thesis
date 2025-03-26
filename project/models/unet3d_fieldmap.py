@@ -40,12 +40,12 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Forward layer of the mode
     def forward(self, img):
-        print("\nForward\n")
+        # print("\nForward\n")
         return self.model(img)
 
     # Training step
     def training_step(self, batch, batch_idx):
-        print("\nTraining step\n")
+        # print("\nTraining step\n")
         # Retrieve the img and batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
@@ -65,13 +65,13 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Validation step
     def validation_step(self, batch, batch_idx):
-        print("\nValidation step")
+        # print("\nValidation step")
         # Retrieve elemens from the batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
         affine = batch["fieldmap_affine"]
         echo_spacing = batch["echo_spacing"]
-        unwarp_direction = batch["unwarp_direction"]
+        # unwarp_direction = batch["unwarp_direction"]
         # mask = batch["mask"]
         # b0_u = batch["b0_u"]
 
@@ -133,10 +133,10 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Logging images
     # def _log_images(self, out, img, b0_u, mask, fieldmap, affine, echo_spacing):
-    def log_images(self, out, img, fieldmap, affine, echo_spacing):
+    def _log_images(self, out, img, fieldmap, affine, echo_spacing):
         # Pick a smple and slice
-        sample_idx = 0
-        slice_idx = 18
+        sample_idx = 30
+        slice_idx = img[sample_idx].shape[1] // 2
 
         # Retriieve the sampled images
         t1 = img[sample_idx][1][slice_idx]
@@ -158,7 +158,7 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Function for defining and computing the loss function
     def compute_loss(self, out, fieldmap):
-        print("\nCompute loss\n")
+        # print("\nCompute loss\n")
         computed_loss = F.mse_loss(out, fieldmap)
         return computed_loss
 
@@ -192,37 +192,58 @@ class conv3D_block(nn.Module):
         x = self.conv3D(x)
         return x
 
-"""
-Class:
-Definition of 3D up-convolutional block
-"""
-class conv3D_block(nn.Module):
+# """
+# Class:
+# Definition of 3D up-convolutional block
+# """
+# class conv3D_block(nn.Module):
 
-    def __init__(self, in_ch, out_ch):
+#     def __init__(self, in_ch, out_ch):
 
-        super(conv3D_block, self).__init__()
+#         super(conv3D_block, self).__init__()
 
-        self.conv3D = nn.Sequential(
-            nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
-            nn.InstanceNorm3d(out_ch),
-            nn.ReLU(inplace=True),
-            nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
-            nn.InstanceNorm3d(out_ch),
-            nn.ReLU(inplace=True)
-        )
+#         self.conv3D = nn.Sequential(
+#             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+#             nn.InstanceNorm3d(out_ch),
+#             nn.ReLU(inplace=True),
+#             nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+#             nn.InstanceNorm3d(out_ch),
+#             nn.ReLU(inplace=True)
+#         )
 
-    def forward(self, x):
-        x = self.conv3D(x)
-        return x
+#     def forward(self, x):
+#         x = self.conv3D(x)
+#         return x
+
+# class up_conv3D_block(nn.Module):
+
+#     def __init__(self, in_ch, out_ch, scale_tuple):
+
+#         super(up_conv3D_block, self).__init__()
+
+#         self.up_conv3D = nn.Sequential(
+#             nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
+#             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+#             nn.InstanceNorm3d(out_ch),
+#             nn.ReLU(inplace=True), # increasing the depth by adding one below
+#             nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+#             nn.InstanceNorm3d(out_ch),
+#             nn.ReLU(inplace=True)
+#         )
+
+#     def forward(self, x):
+#         x = self.up_conv3D(x)
+#         return x
 
 class up_conv3D_block(nn.Module):
 
     def __init__(self, in_ch, out_ch, scale_tuple):
 
         super(up_conv3D_block, self).__init__()
+        self.default_scale = scale_tuple
 
         self.up_conv3D = nn.Sequential(
-            nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
+            # nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
             nn.InstanceNorm3d(out_ch),
             nn.ReLU(inplace=True), # increasing the depth by adding one below
@@ -231,7 +252,14 @@ class up_conv3D_block(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-    def forward(self, x):
+    def forward(self, x, target_size=None):
+        """
+        Forward method altered to interpolate
+        """
+        if target_size is not None:
+            x = F.interpolate(x, size=target_size, mode="trilinear", align_corners=False)
+        else:
+            x = F.interpolate(x, scale_factor=self.default_scale, mode="trilinear", align_corners=False)
         x = self.up_conv3D(x)
         return x
 
@@ -267,73 +295,78 @@ class UNet3D_2Module(nn.Module):
     def forward(self, e_SA):
         # SA network's encoder
         e_SA_1 = self.Conv3D_1(e_SA)
-        print("E1:", e_SA_1.shape)
+        # print("E1:", e_SA_1.shape)
 
         e_SA = self.MaxPool3D_1(e_SA_1)
-        print("E2:", e_SA.shape)
+        # print("E2:", e_SA.shape)
 
         e_SA_2 = self.Conv3D_2(e_SA)
-        print("E3:", e_SA_2.shape)
+        # print("E3:", e_SA_2.shape)
 
         e_SA = self.MaxPool3D_2(e_SA_2)
-        print("E4:", e_SA.shape)
+        # print("E4:", e_SA.shape)
 
         e_SA_3 = self.Conv3D_3(e_SA)
-        print("E5:", e_SA_3.shape)
+        # print("E5:", e_SA_3.shape)
 
         e_SA = self.MaxPool3D_3(e_SA_3)
-        print("E6:", e_SA.shape)
+        # print("E6:", e_SA.shape)
 
         e_SA_4 = self.Conv3D_4(e_SA)
-        print("E7:", e_SA_4.shape)
+        # print("E7:", e_SA_4.shape)
 
         e_SA = self.MaxPool3D_4(e_SA_4)
-        print("E8:", e_SA.shape)
+        # print("E8:", e_SA.shape)
 
         e_SA_5 = self.Conv3D_5(e_SA)
-        print("E9:", e_SA_5.shape)
+        # print("E9:", e_SA_5.shape)
 
         e_SA = self.MaxPool3D_5(e_SA_5)
-        print("E10:", e_SA.shape)
+        # print("E10:", e_SA.shape)
 
         e_SA_6 = self.Conv3D_6(e_SA)
-        print("E11:", e_SA_6.shape)
+        # print("E11:", e_SA_6.shape)
 
         del (e_SA)
 
         # SA network's decoder
-        d_SA = self.up_Conv3D_1(e_SA_6)
-        print("D1:", d_SA.shape)
+        # d_SA = self.up_Conv3D_1(e_SA_6)
+        d_SA = self.up_Conv3D_1(e_SA_6, e_SA_5.shape[2:])
+        # print("D1:", d_SA.shape)
 
         d_SA = torch.cat([e_SA_5, d_SA], dim=1)
-        print("D2:", d_SA.shape)
+        # print("D2:", d_SA.shape)
 
-        d_SA = self.up_Conv3D_2(d_SA)
-        print("D3:", d_SA.shape)
+        # d_SA = self.up_Conv3D_2(d_SA)
+        d_SA = self.up_Conv3D_2(d_SA, e_SA_4.shape[2:])
+        # print("D3:", d_SA.shape)
         
         d_SA = torch.cat([e_SA_4, d_SA], dim=1)
-        print("D4:", d_SA.shape)
+        # print("D4:", d_SA.shape)
         
-        d_SA = self.up_Conv3D_3(d_SA)
-        print("D5:", d_SA.shape)
+        # d_SA = self.up_Conv3D_3(d_SA)
+        d_SA = self.up_Conv3D_3(d_SA, e_SA_3.shape[2:])
+        # print("D5:", d_SA.shape)
         
         d_SA = torch.cat([e_SA_3, d_SA], dim=1)
-        print("D6:", d_SA.shape)
+        # print("D6:", d_SA.shape)
         
-        d_SA = self.up_Conv3D_4(d_SA)
-        print("D7:", d_SA.shape)
+        # d_SA = self.up_Conv3D_4(d_SA)
+        d_SA = self.up_Conv3D_4(d_SA, e_SA_2.shape[2:])
+        # print("D7:", d_SA.shape)
         
         d_SA = torch.cat([e_SA_2, d_SA], dim=1)
-        print("D8:", d_SA.shape)
+        # print("D8:", d_SA.shape)
         
-        d_SA = self.up_Conv3D_5(d_SA)
-        print("D9:", d_SA.shape)
+        # d_SA = self.up_Conv3D_5(d_SA)
+        d_SA = self.up_Conv3D_5(d_SA, e_SA_1.shape[2:])
+        # print("D9:", d_SA.shape)
         
         d_SA = torch.cat([e_SA_1, d_SA], dim=1)
-        print("D10:", d_SA.shape)
+        # print("D10:", d_SA.shape)
         
         d_SA = self.Conv3D_final(d_SA)
-        print("D11:", d_SA.shape)
+        # print("D11:", d_SA.shape)
 
         del (e_SA_1, e_SA_2, e_SA_3, e_SA_4, e_SA_5)
 

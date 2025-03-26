@@ -56,13 +56,13 @@ if __name__ == "__main__":
     
     checkpoint_prefix = f"{wandb.run.id}_"
     every_n_epochs = 100
-    val_every_n_epochs = 100
+    val_every_n_epoch = 100
     log_every_n_steps = 100
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=CHECKPOINT_PATH,
         filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}",
-        every_n_epochs=100,
+        every_n_epochs=every_n_epochs,
         save_top_k=1,
         monitor="val_loss",
         save_last=True
@@ -74,13 +74,13 @@ if __name__ == "__main__":
         max_epochs=max_epochs,
         log_every_n_steps=log_every_n_steps,
         callbacks=[checkpoint_callback, early_stop_callback],
-        default_root=CHECKPOINT_PATH,
-        check_val_every_n_epochs=100,
+        default_root_dir=CHECKPOINT_PATH,
+        check_val_every_n_epoch=val_every_n_epoch,
         logger=wandb_logger
     )
 
-    # trainer.fit(
-    #     model=model,
-    #     train_dataloaders = data_module.train_dataloader(),
-    #     val_dataloaders = data_module.val_dataloader()
-    # )
+    trainer.fit(
+        model=model,
+        train_dataloaders = data_module.train_dataloader(),
+        val_dataloaders = data_module.val_dataloader()
+    )
