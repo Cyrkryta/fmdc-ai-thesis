@@ -253,206 +253,206 @@
         {
             "group": 1,
             "name": "0_in_functional_image",
-            "report": "/tmp/tmpkgzntf9x/preprocessing_workflow/in_functional_image/_report/report.rst",
-            "result": "/tmp/tmpkgzntf9x/preprocessing_workflow/in_functional_image/result_in_functional_image.pklz"
+            "report": "/tmp/tmp6k9o91x9/preprocessing_workflow/in_functional_image/_report/report.rst",
+            "result": "/tmp/tmp6k9o91x9/preprocessing_workflow/in_functional_image/result_in_functional_image.pklz"
         },
         {
             "group": 1,
             "name": "1_in_anatomical_image",
-            "report": "/tmp/tmpps5xf5u_/preprocessing_workflow/in_anatomical_image/_report/report.rst",
-            "result": "/tmp/tmpps5xf5u_/preprocessing_workflow/in_anatomical_image/result_in_anatomical_image.pklz"
+            "report": "/tmp/tmpnqev6iy1/preprocessing_workflow/in_anatomical_image/_report/report.rst",
+            "result": "/tmp/tmpnqev6iy1/preprocessing_workflow/in_anatomical_image/result_in_anatomical_image.pklz"
         },
         {
             "group": 1,
             "name": "2_in_magnitude_image",
-            "report": "/tmp/tmpjl6n1lb6/preprocessing_workflow/in_magnitude_image/_report/report.rst",
-            "result": "/tmp/tmpjl6n1lb6/preprocessing_workflow/in_magnitude_image/result_in_magnitude_image.pklz"
+            "report": "/tmp/tmpvljoj7mb/preprocessing_workflow/in_magnitude_image/_report/report.rst",
+            "result": "/tmp/tmpvljoj7mb/preprocessing_workflow/in_magnitude_image/result_in_magnitude_image.pklz"
         },
         {
             "group": 1,
             "name": "3_in_phase_image",
-            "report": "/tmp/tmp4oegq8vv/preprocessing_workflow/in_phase_image/_report/report.rst",
-            "result": "/tmp/tmp4oegq8vv/preprocessing_workflow/in_phase_image/result_in_phase_image.pklz"
+            "report": "/tmp/tmpsv34sis7/preprocessing_workflow/in_phase_image/_report/report.rst",
+            "result": "/tmp/tmpsv34sis7/preprocessing_workflow/in_phase_image/result_in_phase_image.pklz"
         },
         {
             "group": 1,
             "name": "4_func_motion_correct",
-            "report": "/tmp/tmpv8dzqut7/preprocessing_workflow/func_motion_correct/_report/report.rst",
-            "result": "/tmp/tmpv8dzqut7/preprocessing_workflow/func_motion_correct/result_func_motion_correct.pklz"
+            "report": "/tmp/tmpp467yk7e/preprocessing_workflow/func_motion_correct/_report/report.rst",
+            "result": "/tmp/tmpp467yk7e/preprocessing_workflow/func_motion_correct/result_func_motion_correct.pklz"
         },
         {
             "group": 1,
             "name": "5_anat_skullstrip",
-            "report": "/tmp/tmpm7_ey_1l/preprocessing_workflow/anat_skullstrip/_report/report.rst",
-            "result": "/tmp/tmpm7_ey_1l/preprocessing_workflow/anat_skullstrip/result_anat_skullstrip.pklz"
+            "report": "/tmp/tmpr8q70nv4/preprocessing_workflow/anat_skullstrip/_report/report.rst",
+            "result": "/tmp/tmpr8q70nv4/preprocessing_workflow/anat_skullstrip/result_anat_skullstrip.pklz"
         },
         {
             "group": 1,
             "name": "6_mag_skullstrip",
-            "report": "/tmp/tmpvg39lnvt/preprocessing_workflow/mag_skullstrip/_report/report.rst",
-            "result": "/tmp/tmpvg39lnvt/preprocessing_workflow/mag_skullstrip/result_mag_skullstrip.pklz"
+            "report": "/tmp/tmpk6huanq0/preprocessing_workflow/mag_skullstrip/_report/report.rst",
+            "result": "/tmp/tmpk6huanq0/preprocessing_workflow/mag_skullstrip/result_mag_skullstrip.pklz"
         },
         {
             "group": 1,
             "name": "7_mean_func",
-            "report": "/tmp/tmposty62s9/preprocessing_workflow/mean_func/_report/report.rst",
-            "result": "/tmp/tmposty62s9/preprocessing_workflow/mean_func/result_mean_func.pklz"
+            "report": "/tmp/tmp_rd79ldq/preprocessing_workflow/mean_func/_report/report.rst",
+            "result": "/tmp/tmp_rd79ldq/preprocessing_workflow/mean_func/result_mean_func.pklz"
         },
         {
             "group": 1,
             "name": "8_median_tf",
-            "report": "/tmp/tmpvztqzjx2/preprocessing_workflow/median_tf/_report/report.rst",
-            "result": "/tmp/tmpvztqzjx2/preprocessing_workflow/median_tf/result_median_tf.pklz"
+            "report": "/tmp/tmps50iw4uu/preprocessing_workflow/median_tf/_report/report.rst",
+            "result": "/tmp/tmps50iw4uu/preprocessing_workflow/median_tf/result_median_tf.pklz"
         },
         {
             "group": 1,
             "name": "9_func_skullstrip",
-            "report": "/tmp/tmp0xgw1h8i/preprocessing_workflow/func_skullstrip/_report/report.rst",
-            "result": "/tmp/tmp0xgw1h8i/preprocessing_workflow/func_skullstrip/result_func_skullstrip.pklz"
+            "report": "/tmp/tmpmppbjue1/preprocessing_workflow/func_skullstrip/_report/report.rst",
+            "result": "/tmp/tmpmppbjue1/preprocessing_workflow/func_skullstrip/result_func_skullstrip.pklz"
         },
         {
             "group": 1,
             "name": "10_intensity_normalize_anat",
-            "report": "/tmp/tmpuh6h9qgq/preprocessing_workflow/intensity_normalize_anat/_report/report.rst",
-            "result": "/tmp/tmpuh6h9qgq/preprocessing_workflow/intensity_normalize_anat/result_intensity_normalize_anat.pklz"
+            "report": "/tmp/tmpix027eua/preprocessing_workflow/intensity_normalize_anat/_report/report.rst",
+            "result": "/tmp/tmpix027eua/preprocessing_workflow/intensity_normalize_anat/result_intensity_normalize_anat.pklz"
         },
         {
             "group": 1,
             "name": "11_mag_erode",
-            "report": "/tmp/tmpcuyf2xpn/preprocessing_workflow/mag_erode/_report/report.rst",
-            "result": "/tmp/tmpcuyf2xpn/preprocessing_workflow/mag_erode/result_mag_erode.pklz"
+            "report": "/tmp/tmpaoe2edqq/preprocessing_workflow/mag_erode/_report/report.rst",
+            "result": "/tmp/tmpaoe2edqq/preprocessing_workflow/mag_erode/result_mag_erode.pklz"
         },
         {
             "group": 1,
             "name": "12_out_b0_d_mean",
-            "report": "/tmp/tmpo0pv3fvu/preprocessing_workflow/out_b0_d_mean/_report/report.rst",
-            "result": "/tmp/tmpo0pv3fvu/preprocessing_workflow/out_b0_d_mean/result_out_b0_d_mean.pklz"
+            "report": "/tmp/tmps72l9qub/preprocessing_workflow/out_b0_d_mean/_report/report.rst",
+            "result": "/tmp/tmps72l9qub/preprocessing_workflow/out_b0_d_mean/result_out_b0_d_mean.pklz"
         },
         {
             "group": 1,
             "name": "13_mean_func_to_anat_reg",
-            "report": "/tmp/tmp_v_jbm0b/preprocessing_workflow/mean_func_to_anat_reg/_report/report.rst",
-            "result": "/tmp/tmp_v_jbm0b/preprocessing_workflow/mean_func_to_anat_reg/result_mean_func_to_anat_reg.pklz"
+            "report": "/tmp/tmp204r3loa/preprocessing_workflow/mean_func_to_anat_reg/_report/report.rst",
+            "result": "/tmp/tmp204r3loa/preprocessing_workflow/mean_func_to_anat_reg/result_mean_func_to_anat_reg.pklz"
         },
         {
             "group": 1,
             "name": "14_median_tf_minus_five",
-            "report": "/tmp/tmpwd5315_e/preprocessing_workflow/median_tf_minus_five/_report/report.rst",
-            "result": "/tmp/tmpwd5315_e/preprocessing_workflow/median_tf_minus_five/result_median_tf_minus_five.pklz"
+            "report": "/tmp/tmphr6n3dbk/preprocessing_workflow/median_tf_minus_five/_report/report.rst",
+            "result": "/tmp/tmphr6n3dbk/preprocessing_workflow/median_tf_minus_five/result_median_tf_minus_five.pklz"
         },
         {
             "group": 1,
             "name": "15_out_b0_d",
-            "report": "/tmp/tmp81_7c9j2/preprocessing_workflow/out_b0_d/_report/report.rst",
-            "result": "/tmp/tmp81_7c9j2/preprocessing_workflow/out_b0_d/result_out_b0_d.pklz"
+            "report": "/tmp/tmp4fkrhbeq/preprocessing_workflow/out_b0_d/_report/report.rst",
+            "result": "/tmp/tmp4fkrhbeq/preprocessing_workflow/out_b0_d/result_out_b0_d.pklz"
         },
         {
             "group": 1,
             "name": "16_out_b0_mask",
-            "report": "/tmp/tmpzs6sy57t/preprocessing_workflow/out_b0_mask/_report/report.rst",
-            "result": "/tmp/tmpzs6sy57t/preprocessing_workflow/out_b0_mask/result_out_b0_mask.pklz"
+            "report": "/tmp/tmp3nwd05rm/preprocessing_workflow/out_b0_mask/_report/report.rst",
+            "result": "/tmp/tmp3nwd05rm/preprocessing_workflow/out_b0_mask/result_out_b0_mask.pklz"
         },
         {
             "group": 1,
             "name": "17_transform_t1_to_mni",
-            "report": "/tmp/tmpqzhsh9ij/preprocessing_workflow/transform_t1_to_mni/_report/report.rst",
-            "result": "/tmp/tmpqzhsh9ij/preprocessing_workflow/transform_t1_to_mni/result_transform_t1_to_mni.pklz"
+            "report": "/tmp/tmpy_u3dl14/preprocessing_workflow/transform_t1_to_mni/_report/report.rst",
+            "result": "/tmp/tmpy_u3dl14/preprocessing_workflow/transform_t1_to_mni/result_transform_t1_to_mni.pklz"
         },
         {
             "group": 1,
             "name": "18_mag_to_mean_func_reg",
-            "report": "/tmp/tmpsvkowhtb/preprocessing_workflow/mag_to_mean_func_reg/_report/report.rst",
-            "result": "/tmp/tmpsvkowhtb/preprocessing_workflow/mag_to_mean_func_reg/result_mag_to_mean_func_reg.pklz"
+            "report": "/tmp/tmpaoan4ghn/preprocessing_workflow/mag_to_mean_func_reg/_report/report.rst",
+            "result": "/tmp/tmpaoan4ghn/preprocessing_workflow/mag_to_mean_func_reg/result_mag_to_mean_func_reg.pklz"
         },
         {
             "group": 1,
             "name": "19_prepare_fieldmap",
-            "report": "/tmp/tmpyrpnwr3n/preprocessing_workflow/prepare_fieldmap/_report/report.rst",
-            "result": "/tmp/tmpyrpnwr3n/preprocessing_workflow/prepare_fieldmap/result_prepare_fieldmap.pklz"
+            "report": "/tmp/tmp7f9dkf94/preprocessing_workflow/prepare_fieldmap/_report/report.rst",
+            "result": "/tmp/tmp7f9dkf94/preprocessing_workflow/prepare_fieldmap/result_prepare_fieldmap.pklz"
         },
         {
             "group": 1,
             "name": "20_out_func_to_struct",
-            "report": "/tmp/tmpkafnwcdt/preprocessing_workflow/out_func_to_struct/_report/report.rst",
-            "result": "/tmp/tmpkafnwcdt/preprocessing_workflow/out_func_to_struct/result_out_func_to_struct.pklz"
+            "report": "/tmp/tmp1ibviho0/preprocessing_workflow/out_func_to_struct/_report/report.rst",
+            "result": "/tmp/tmp1ibviho0/preprocessing_workflow/out_func_to_struct/result_out_func_to_struct.pklz"
         },
         {
             "group": 1,
             "name": "21_invert_mean_func_to_anat_mat",
-            "report": "/tmp/tmpek42lm_s/preprocessing_workflow/invert_mean_func_to_anat_mat/_report/report.rst",
-            "result": "/tmp/tmpek42lm_s/preprocessing_workflow/invert_mean_func_to_anat_mat/result_invert_mean_func_to_anat_mat.pklz"
+            "report": "/tmp/tmpy1k8b0fu/preprocessing_workflow/invert_mean_func_to_anat_mat/_report/report.rst",
+            "result": "/tmp/tmpy1k8b0fu/preprocessing_workflow/invert_mean_func_to_anat_mat/result_invert_mean_func_to_anat_mat.pklz"
         },
         {
             "group": 1,
             "name": "22_extract_roi_func_10",
-            "report": "/tmp/tmpj67rbsca/preprocessing_workflow/extract_roi_func_10/_report/report.rst",
-            "result": "/tmp/tmpj67rbsca/preprocessing_workflow/extract_roi_func_10/result_extract_roi_func_10.pklz"
+            "report": "/tmp/tmpdb00h5tc/preprocessing_workflow/extract_roi_func_10/_report/report.rst",
+            "result": "/tmp/tmpdb00h5tc/preprocessing_workflow/extract_roi_func_10/result_extract_roi_func_10.pklz"
         },
         {
             "group": 1,
             "name": "23_register_t1_to_mni",
-            "report": "/tmp/tmp4q8re42j/preprocessing_workflow/register_t1_to_mni/_report/report.rst",
-            "result": "/tmp/tmp4q8re42j/preprocessing_workflow/register_t1_to_mni/result_register_t1_to_mni.pklz"
+            "report": "/tmp/tmpnim7s_k0/preprocessing_workflow/register_t1_to_mni/_report/report.rst",
+            "result": "/tmp/tmpnim7s_k0/preprocessing_workflow/register_t1_to_mni/result_register_t1_to_mni.pklz"
         },
         {
             "group": 1,
             "name": "24_fieldmap_to_mean_func_reg",
-            "report": "/tmp/tmplar3lszd/preprocessing_workflow/fieldmap_to_mean_func_reg/_report/report.rst",
-            "result": "/tmp/tmplar3lszd/preprocessing_workflow/fieldmap_to_mean_func_reg/result_fieldmap_to_mean_func_reg.pklz"
+            "report": "/tmp/tmpvkbckcrv/preprocessing_workflow/fieldmap_to_mean_func_reg/_report/report.rst",
+            "result": "/tmp/tmpvkbckcrv/preprocessing_workflow/fieldmap_to_mean_func_reg/result_fieldmap_to_mean_func_reg.pklz"
         },
         {
             "group": 1,
             "name": "25_func_ex10_skullstrip",
-            "report": "/tmp/tmp1a4pqx5h/preprocessing_workflow/func_ex10_skullstrip/_report/report.rst",
-            "result": "/tmp/tmp1a4pqx5h/preprocessing_workflow/func_ex10_skullstrip/result_func_ex10_skullstrip.pklz"
+            "report": "/tmp/tmpbh2fvi8z/preprocessing_workflow/func_ex10_skullstrip/_report/report.rst",
+            "result": "/tmp/tmpbh2fvi8z/preprocessing_workflow/func_ex10_skullstrip/result_func_ex10_skullstrip.pklz"
         },
         {
             "group": 1,
             "name": "26_out_mni_warp",
-            "report": "/tmp/tmpr5g45js9/preprocessing_workflow/out_mni_warp/_report/report.rst",
-            "result": "/tmp/tmpr5g45js9/preprocessing_workflow/out_mni_warp/result_out_mni_warp.pklz"
+            "report": "/tmp/tmptbqof1zk/preprocessing_workflow/out_mni_warp/_report/report.rst",
+            "result": "/tmp/tmptbqof1zk/preprocessing_workflow/out_mni_warp/result_out_mni_warp.pklz"
         },
         {
             "group": 1,
             "name": "27_out_field_map",
-            "report": "/tmp/tmp23n2aq6c/preprocessing_workflow/out_field_map/_report/report.rst",
-            "result": "/tmp/tmp23n2aq6c/preprocessing_workflow/out_field_map/result_out_field_map.pklz"
+            "report": "/tmp/tmpbe9n63az/preprocessing_workflow/out_field_map/_report/report.rst",
+            "result": "/tmp/tmpbe9n63az/preprocessing_workflow/out_field_map/result_out_field_map.pklz"
         },
         {
             "group": 1,
             "name": "28_fugue_correction",
-            "report": "/tmp/tmpbszprv3b/preprocessing_workflow/fugue_correction/_report/report.rst",
-            "result": "/tmp/tmpbszprv3b/preprocessing_workflow/fugue_correction/result_fugue_correction.pklz"
+            "report": "/tmp/tmpn2wu_req/preprocessing_workflow/fugue_correction/_report/report.rst",
+            "result": "/tmp/tmpn2wu_req/preprocessing_workflow/fugue_correction/result_fugue_correction.pklz"
         },
         {
             "group": 1,
             "name": "29_out_b0_d_10",
-            "report": "/tmp/tmphv78ylf2/preprocessing_workflow/out_b0_d_10/_report/report.rst",
-            "result": "/tmp/tmphv78ylf2/preprocessing_workflow/out_b0_d_10/result_out_b0_d_10.pklz"
+            "report": "/tmp/tmpezu4e_lu/preprocessing_workflow/out_b0_d_10/_report/report.rst",
+            "result": "/tmp/tmpezu4e_lu/preprocessing_workflow/out_b0_d_10/result_out_b0_d_10.pklz"
         },
         {
             "group": 1,
             "name": "30_fugue_skullstrip",
-            "report": "/tmp/tmppe3522fl/preprocessing_workflow/fugue_skullstrip/_report/report.rst",
-            "result": "/tmp/tmppe3522fl/preprocessing_workflow/fugue_skullstrip/result_fugue_skullstrip.pklz"
+            "report": "/tmp/tmpz65kci5b/preprocessing_workflow/fugue_skullstrip/_report/report.rst",
+            "result": "/tmp/tmpz65kci5b/preprocessing_workflow/fugue_skullstrip/result_fugue_skullstrip.pklz"
         },
         {
             "group": 1,
             "name": "31_out_b0_u",
-            "report": "/tmp/tmpzxu24juo/preprocessing_workflow/out_b0_u/_report/report.rst",
-            "result": "/tmp/tmpzxu24juo/preprocessing_workflow/out_b0_u/result_out_b0_u.pklz"
+            "report": "/tmp/tmp_woz7wab/preprocessing_workflow/out_b0_u/_report/report.rst",
+            "result": "/tmp/tmp_woz7wab/preprocessing_workflow/out_b0_u/result_out_b0_u.pklz"
         },
         {
             "group": 1,
             "name": "32_transform_anat",
-            "report": "/tmp/tmp7rup_8z_/preprocessing_workflow/transform_anat/_report/report.rst",
-            "result": "/tmp/tmp7rup_8z_/preprocessing_workflow/transform_anat/result_transform_anat.pklz"
+            "report": "/tmp/tmpo0tp4kbc/preprocessing_workflow/transform_anat/_report/report.rst",
+            "result": "/tmp/tmpo0tp4kbc/preprocessing_workflow/transform_anat/result_transform_anat.pklz"
         },
         {
             "group": 1,
             "name": "33_out_t1w",
-            "report": "/tmp/tmppy4u27yl/preprocessing_workflow/out_t1w/_report/report.rst",
-            "result": "/tmp/tmppy4u27yl/preprocessing_workflow/out_t1w/result_out_t1w.pklz"
+            "report": "/tmp/tmpt4rretku/preprocessing_workflow/out_t1w/_report/report.rst",
+            "result": "/tmp/tmpt4rretku/preprocessing_workflow/out_t1w/result_out_t1w.pklz"
         }
     ]
 }

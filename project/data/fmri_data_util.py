@@ -21,10 +21,64 @@ def collect_all_subject_paths(dataset_paths):
 
     return subject_paths
 
-"""
-Function for retrieving a particular subject data from a path
-"""
+def load_data_from_path_for_train(subject_path):
+    # Collect paths
+    t1_path = os.path.join(subject_path, "T1w.nii.gz")
+    b0_d_10_path = os.path.join(subject_path, "b0_d_10.nii.gz")
+    fieldmap_path = os.path.join(subject_path, "field_map.nii.gz")
+
+    # Retrieve dataset path
+    dataset_path = Path(subject_path).parent.absolute()
+    with open(os.path.join(dataset_path, 'dataset_meta.json')) as f:
+        dataset_meta = json.load(f)
+
+    # Get image
+    img_t1 = data_util.get_nii_img(t1_path)
+    img_b0_d_10 = data_util.get_nii_img(b0_d_10_path)
+    img_fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0]
+
+    # Calculate timesteps and extend
+    number_timesteps = img_b0_d_10.shape[3]
+
+    # Repeat T1 image if we only have one to mach the number of timesteps for training
+    if len(img_t1.shape) == 3:
+        img_t1 = np.repeat(img_t1[None, :], number_timesteps, axis=0)
+        img_t1 = np.transpose(img_t1, axes=(1, 2, 3, 0))
+
+    if len(img_fieldmap.shape) == 3:
+        img_fieldmap = np.repeat(img_fieldmap[None, :], number_timesteps, axis=0)
+        img_fieldmap = np.transpose(img_fieldmap, axes=(1, 2, 3, 0))
+
+    # Convert to torch img format
+    img_t1 = data_util.nii2torch(img_t1)
+    img_b0_d_10 = data_util.nii2torch(img_b0_d_10)
+    img_fieldmap = data_util.niiu2torch(img_fieldmap)
+
+    # Normalize data
+    img_t1 = data_util.normalize_img(img_t1, 150, 0, 1, -1)  # Based on freesurfers T1 normalization
+    max_img_b0_d = np.percentile(img_b0_d_10, 99)  # This usually makes majority of CSF be the upper bound
+    min_img_b0_d = 0  # Assumes lower bound is zero (direct from scanner)
+    img_b0_d_10 = data_util.normalize_img(img_b0_d_10, max_img_b0_d, min_img_b0_d, 1, -1)
+
+    fieldmap_affine = nib.load(fieldmap_path).affine
+    fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
+
+    echo_spacing = np.array(dataset_meta['echospacing'])
+    echo_spacing = np.repeat(echo_spacing, number_timesteps, axis=0)
+
+    unwarp_direction = dataset_meta["phaseencodingdirection"]
+    unwarp_direction = np.array([unwarp_direction] * number_timesteps)
+    # unwarp_direction = np.repeat(unwarp_direction, number_timesteps, axis=0)
+
+    # Return the loaded images along with the test images if available
+    return (img_t1, img_b0_d_10, img_fieldmap, fieldmap_affine, echo_spacing, unwarp_direction)
+
+
+
 def load_data_from_path(subject_path):
+    """
+    Function for retrieving a particular subject data from a path
+    """
     # Get paths
     t1_path = os.path.join(subject_path, 'T1w.nii.gz')
     b0_d_path = os.path.join(subject_path, 'b0_d.nii.gz')

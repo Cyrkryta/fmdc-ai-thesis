@@ -40,12 +40,12 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Forward layer of the mode
     def forward(self, img):
-        print("!!!!!!!!!!!!!! forward START")
+        print("\nForward\n")
         return self.model(img)
 
     # Training step
     def training_step(self, batch, batch_idx):
-        print("!!!!!!!!!!!!!! training_step")
+        print("\nTraining step\n")
         # Retrieve the img and batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
@@ -65,14 +65,15 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Validation step
     def validation_step(self, batch, batch_idx):
-        print("!!!!!!!!!!!!!! validation_step START")
+        print("\nValidation step")
         # Retrieve elemens from the batch
         img_data = batch["img_data"]
-        b0_u = batch["b0_u"]
-        mask = batch["mask"]
         fieldmap = batch["fieldmap"]
-        affine = batch["b0u_affine"]
+        affine = batch["fieldmap_affine"]
         echo_spacing = batch["echo_spacing"]
+        unwarp_direction = batch["unwarp_direction"]
+        # mask = batch["mask"]
+        # b0_u = batch["b0_u"]
 
         # Compute the fieldmap estimate
         out = self(img_data)
@@ -85,15 +86,14 @@ class UNet3DFieldmap(pl.LightningModule):
 
         # Log first sample images in each batch to W&B
         if batch_idx == 0:
-            self._log_images(out, img_data, b0_u, mask, fieldmap, affine, echo_spacing)
+            self._log_images(out, img_data, fieldmap, affine, echo_spacing)
 
-        print("!!!!!!!!!!!!!! validation_step END")
         # Return the loss
         return val_loss
 
 
     # Undistort b0
-    def _undistort_b0(self, b0_d, fieldmap, affine_b0d, affine_fieldmap, echo_spacing):
+    def _undistort_b0(self, b0_d, fieldmap, affine_b0d, affine_fieldmap, echo_spacing, unwarp_direction):
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as directory:
             # Move distorted volume to CPU, detach, and convert to a numpy array (repeated 10 times?)
@@ -114,7 +114,9 @@ class UNet3DFieldmap(pl.LightningModule):
             in_b0d = Node(SelectFiles({"out_file": abspath(os.path.join(directory, 'b0_d.nii.gz'))}), name="in_b0d")
             in_fieldmap = Node(SelectFiles({"out_file": abspath(os.path.join(directory, 'field_map.nii.gz'))}), name="in_fieldmap")
             out_b0_u = Node(nio.ExportFile(out_file=abspath(os.path.join(directory, "b0_u.nii.gz")), clobber=True), name="out_b0_u")
-            fugue_correction = Node(fsl.FUGUE(dwell_time=echo_spacing, smooth3d=3, unwarp_direction="y-"), name="fugue_correction")
+            # fugue_correction = Node(fsl.FUGUE(dwell_time=echo_spacing, smooth3d=3, unwarp_direction="y-"), name="fugue_correction")
+            fugue_correction = Node(fsl.FUGUE(dwell_time=echo_spacing, smooth3d=3, unwarp_direction=unwarp_direction), name="fugue_correction")
+
 
             # Perform the fugue correction
             workflow = Workflow(name="undistort_subject")
@@ -130,7 +132,8 @@ class UNet3DFieldmap(pl.LightningModule):
         return out
 
     # Logging images
-    def _log_images(self, out, img, b0_u, mask, fieldmap, affine, echo_spacing):
+    # def _log_images(self, out, img, b0_u, mask, fieldmap, affine, echo_spacing):
+    def log_images(self, out, img, fieldmap, affine, echo_spacing):
         # Pick a smple and slice
         sample_idx = 0
         slice_idx = 18
@@ -155,9 +158,8 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Function for defining and computing the loss function
     def compute_loss(self, out, fieldmap):
-        print("!!!!!!!!!!!!!! compute_loss START")
+        print("\nCompute loss\n")
         computed_loss = F.mse_loss(out, fieldmap)
-        print("!!!!!!!!!!!!!! compute_loss END")
         return computed_loss
 
     # Configuration of the optimizer
@@ -265,53 +267,73 @@ class UNet3D_2Module(nn.Module):
     def forward(self, e_SA):
         # SA network's encoder
         e_SA_1 = self.Conv3D_1(e_SA)
-        # print("E1:", e_SA_1.shape)
+        print("E1:", e_SA_1.shape)
+
         e_SA = self.MaxPool3D_1(e_SA_1)
-        # print("E2:", e_SA.shape)
+        print("E2:", e_SA.shape)
+
         e_SA_2 = self.Conv3D_2(e_SA)
-        # print("E3:", e_SA_2.shape)
+        print("E3:", e_SA_2.shape)
+
         e_SA = self.MaxPool3D_2(e_SA_2)
-        # print("E4:", e_SA.shape)
+        print("E4:", e_SA.shape)
+
         e_SA_3 = self.Conv3D_3(e_SA)
-        # print("E5:", e_SA_3.shape)
+        print("E5:", e_SA_3.shape)
+
         e_SA = self.MaxPool3D_3(e_SA_3)
-        # print("E6:", e_SA.shape)
+        print("E6:", e_SA.shape)
+
         e_SA_4 = self.Conv3D_4(e_SA)
-        # print("E7:", e_SA_4.shape)
+        print("E7:", e_SA_4.shape)
+
         e_SA = self.MaxPool3D_4(e_SA_4)
-        # print("E8:", e_SA.shape)
+        print("E8:", e_SA.shape)
+
         e_SA_5 = self.Conv3D_5(e_SA)
-        # print("E9:", e_SA_5.shape)
+        print("E9:", e_SA_5.shape)
+
         e_SA = self.MaxPool3D_5(e_SA_5)
-        # print("E10:", e_SA.shape)
+        print("E10:", e_SA.shape)
+
         e_SA_6 = self.Conv3D_6(e_SA)
-        # print("E11:", e_SA_6.shape)
+        print("E11:", e_SA_6.shape)
 
         del (e_SA)
 
         # SA network's decoder
         d_SA = self.up_Conv3D_1(e_SA_6)
-        # print("D1:", d_SA.shape)
+        print("D1:", d_SA.shape)
+
         d_SA = torch.cat([e_SA_5, d_SA], dim=1)
-        # print("D2:", d_SA.shape)
+        print("D2:", d_SA.shape)
+
         d_SA = self.up_Conv3D_2(d_SA)
-        # print("D3:", d_SA.shape)
+        print("D3:", d_SA.shape)
+        
         d_SA = torch.cat([e_SA_4, d_SA], dim=1)
-        # print("D4:", d_SA.shape)
+        print("D4:", d_SA.shape)
+        
         d_SA = self.up_Conv3D_3(d_SA)
-        # print("D5:", d_SA.shape)
+        print("D5:", d_SA.shape)
+        
         d_SA = torch.cat([e_SA_3, d_SA], dim=1)
-        # print("D6:", d_SA.shape)
+        print("D6:", d_SA.shape)
+        
         d_SA = self.up_Conv3D_4(d_SA)
-        # print("D7:", d_SA.shape)
+        print("D7:", d_SA.shape)
+        
         d_SA = torch.cat([e_SA_2, d_SA], dim=1)
-        # print("D8:", d_SA.shape)
+        print("D8:", d_SA.shape)
+        
         d_SA = self.up_Conv3D_5(d_SA)
-        # print("D9:", d_SA.shape)
+        print("D9:", d_SA.shape)
+        
         d_SA = torch.cat([e_SA_1, d_SA], dim=1)
-        # print("D10:", d_SA.shape)
+        print("D10:", d_SA.shape)
+        
         d_SA = self.Conv3D_final(d_SA)
-        # print("D11:", d_SA.shape)
+        print("D11:", d_SA.shape)
 
         del (e_SA_1, e_SA_2, e_SA_3, e_SA_4, e_SA_5)
 
