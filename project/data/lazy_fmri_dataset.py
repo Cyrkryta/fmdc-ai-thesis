@@ -61,10 +61,10 @@ class LazyFMRIDataset(Dataset):
         # echo_spacing_item = echo_spacing[timepoint_idx]
 
         # Define the 2-channel input
-        img_data = torch.stack((torch.from_numpy(data['b0_d_10']).float().to(self.device), torch.from_numpy(data['t1']).float().to(self.device)), dim=0)
-        print(img_data.shape)
+        img_data = torch.stack((torch.from_numpy(data['b0_d_10']).float().to(self.device), torch.from_numpy(data['t1']).float().to(self.device)))
+        # print(img_data.shape)
         fieldmap = torch.from_numpy(data["fieldmap"]).float().to(self.device)
-        print(fieldmap.shape)
+        # print(fieldmap.shape)
 
         output = {
             "img_data": img_data,

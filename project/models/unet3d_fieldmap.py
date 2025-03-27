@@ -137,7 +137,7 @@ class UNet3DFieldmap(pl.LightningModule):
     # def _log_images(self, out, img, fieldmap, affine, echo_spacing):
     def _log_images(self, out, img, fieldmap):
         # Pick a smple and slice
-        sample_idx = 30
+        sample_idx = 0
         slice_idx = img[sample_idx].shape[1] // 2
 
         # Retriieve the sampled images

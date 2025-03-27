@@ -34,7 +34,7 @@ class FMRIDataModule(pl.LightningDataModule):
             print(f"Datasets not found... creating datasets")
             ALL_SUBJECT_PATHS = fmri_data_util.collect_all_subject_paths(dataset_paths=self.TRAIN_DATASET_PATHS)
             total = len(ALL_SUBJECT_PATHS)
-            train_count = int(0.8 * total)
+            train_count = int(0.9 * total) # 10 percent of total samples for validation
             val_count = total - train_count
 
             rng = torch.Generator()

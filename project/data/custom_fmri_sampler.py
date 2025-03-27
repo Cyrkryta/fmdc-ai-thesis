@@ -15,11 +15,12 @@ class FMRICustomSampler(Sampler):
     """
     Custom sampler to only sample elements from the same projects
     """
-    def __init__(self, dataset, batch_size, key_fn):
+    def __init__(self, dataset, batch_size, key_fn, seed=42):
         self.dataset = dataset
         self.batch_size = batch_size
         self.key_fn = key_fn
         self.groups = {}
+        self.seed = seed
 
         # Group the dataset indices
         for idx in range(len(dataset)):
@@ -27,6 +28,9 @@ class FMRICustomSampler(Sampler):
             if key not in self.groups:
                 self.groups[key] = []
             self.groups[key].append(idx)
+
+        # Setting the seed for the random generator
+        random.seed(self.seed)
 
         # Prepare the batches to only contain the groups
         self.batches = []
