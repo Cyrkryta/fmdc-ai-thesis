@@ -45,13 +45,13 @@ class LazyFMRIDataset(Dataset):
     def __getitem__(self, idx):
         # Retrieve the information
         SUBJECT_PATH, timepoint_idx, _ = self.index_mapping[idx]
-        img_t1, img_b0_d_10, img_fieldmap, fieldmap_affine, echo_spacing, unwarp_direction = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
+        img_t1, img_b0_d_10, img_fieldmap, _, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
 
         # Define the data (particular timepoint)
         data = {
-            "b0_d_10": img_b0_d_10[..., timepoint_idx], # [H, W, D]
-            "t1": img_t1[..., timepoint_idx], # [H, W, D]
-            "fieldmap": img_fieldmap[..., timepoint_idx] # [H, W, D]
+            "b0_d_10": img_b0_d_10[timepoint_idx, :, :, :],
+            "t1": img_t1[timepoint_idx, :, :, :],
+            "fieldmap": img_fieldmap[timepoint_idx, :, :, :, :] # [H, W, D]
         }
 
 
@@ -61,16 +61,14 @@ class LazyFMRIDataset(Dataset):
         # echo_spacing_item = echo_spacing[timepoint_idx]
 
         # Define the 2-channel input
-        img_data = torch.stack((torch.from_numpy(data['b0_d_10'].transpose(2,0,1)).float().to(self.device), torch.from_numpy(data['t1'].transpose(2,0,1)).float().to(self.device)), dim=0)
-        print(f"\nIMG DATA SHAPE: {img_data.shape}\n")
+        img_data = torch.stack((torch.from_numpy(data['b0_d_10']).float().to(self.device), torch.from_numpy(data['t1']).float().to(self.device)), dim=0)
+        print(img_data.shape)
         fieldmap = torch.from_numpy(data["fieldmap"]).float().to(self.device)
-        print(f"\nFIELDMAP SHAPE PRE TRANSPOSE: {fieldmap.shape}\n")
-        fieldmap_transposed = fieldmap.transpose(2,0,1)
-        print(f"\nFIELDMAP SHAPE POST TRANSPOSE: {fieldmap_transposed.shape}")
+        print(fieldmap.shape)
 
         output = {
             "img_data": img_data,
-            "fieldmap": fieldmap.unsqueeze(0),
+            "fieldmap": fieldmap,
             # "fieldmap_affine": torch.from_numpy(fieldmap_affine_item).float().to(self.device),
             # "echo_spacing": torch.from_numpy(np.asarray(echo_spacing_item)).float().to(self.device)
             # "unwarp_direction": unwarp_direction
