@@ -69,8 +69,8 @@ class UNet3DFieldmap(pl.LightningModule):
         # Retrieve elemens from the batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
-        affine = batch["fieldmap_affine"]
-        echo_spacing = batch["echo_spacing"]
+        # affine = batch["fieldmap_affine"]
+        # echo_spacing = batch["echo_spacing"]
         # unwarp_direction = batch["unwarp_direction"]
         # mask = batch["mask"]
         # b0_u = batch["b0_u"]
@@ -86,7 +86,8 @@ class UNet3DFieldmap(pl.LightningModule):
 
         # Log first sample images in each batch to W&B
         if batch_idx == 0:
-            self._log_images(out, img_data, fieldmap, affine, echo_spacing)
+            self._log_images(out, img_data, fieldmap)
+            # self._log_images(out, img_data, fieldmap, affine, echo_spacing)
 
         # Return the loss
         return val_loss
@@ -133,7 +134,8 @@ class UNet3DFieldmap(pl.LightningModule):
 
     # Logging images
     # def _log_images(self, out, img, b0_u, mask, fieldmap, affine, echo_spacing):
-    def _log_images(self, out, img, fieldmap, affine, echo_spacing):
+    # def _log_images(self, out, img, fieldmap, affine, echo_spacing):
+    def _log_images(self, out, img, fieldmap):
         # Pick a smple and slice
         sample_idx = 30
         slice_idx = img[sample_idx].shape[1] // 2
@@ -143,8 +145,8 @@ class UNet3DFieldmap(pl.LightningModule):
         b0_d = img[sample_idx][0][slice_idx]
         # b0_u = b0_u[sample_idx][0][slice_idx]
         fieldmap = fieldmap[sample_idx][0][slice_idx]
-        affine = affine[sample_idx]
-        echo_spacing = echo_spacing[sample_idx]
+        # affine = affine[sample_idx]
+        # echo_spacing = echo_spacing[sample_idx]
 
         # Log the sample images to wandb
         wandb.log({

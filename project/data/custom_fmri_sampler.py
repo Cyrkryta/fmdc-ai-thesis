@@ -7,7 +7,9 @@ def get_project_key(dataset, idx):
     """
     Custom function for retrieving a designated project key
     """
-    return dataset.project_keys[idx]
+    # return dataset.project_keys[idx]
+    _, _, project = dataset.index_mapping[idx]
+    return project
 
 class FMRICustomSampler(Sampler):
     """
@@ -44,4 +46,3 @@ class FMRICustomSampler(Sampler):
     # Retrieve length
     def __len__(self):
         return len(self.batches)
-    pass
