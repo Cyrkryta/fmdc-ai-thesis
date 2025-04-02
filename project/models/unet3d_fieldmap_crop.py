@@ -69,11 +69,6 @@ class UNet3DFieldmap(pl.LightningModule):
         # Retrieve elemens from the batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
-        # affine = batch["fieldmap_affine"]
-        # echo_spacing = batch["echo_spacing"]
-        # unwarp_direction = batch["unwarp_direction"]
-        # mask = batch["mask"]
-        # b0_u = batch["b0_u"]
 
         # Compute the fieldmap estimate
         out = self(img_data)
@@ -236,15 +231,42 @@ class conv3D_block(nn.Module):
 #         x = self.up_conv3D(x)
 #         return x
 
+# class up_conv3D_block(nn.Module):
+
+#     def __init__(self, in_ch, out_ch, scale_tuple):
+
+#         super(up_conv3D_block, self).__init__()
+#         self.default_scale = scale_tuple
+
+#         self.up_conv3D = nn.Sequential(
+#             # nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
+#             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+#             nn.InstanceNorm3d(out_ch),
+#             nn.ReLU(inplace=True), # increasing the depth by adding one below
+#             nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
+#             nn.InstanceNorm3d(out_ch),
+#             nn.ReLU(inplace=True)
+#         )
+
+#     def forward(self, x, target_size=None):
+#         """
+#         Forward method altered to interpolate
+#         """
+#         if target_size is not None:
+#             x = F.interpolate(x, size=target_size, mode="trilinear", align_corners=False)
+#         else:
+#             x = F.interpolate(x, scale_factor=self.default_scale, mode="trilinear", align_corners=False)
+#         x = self.up_conv3D(x)
+#         return x
+    
 class up_conv3D_block(nn.Module):
 
     def __init__(self, in_ch, out_ch, scale_tuple):
 
         super(up_conv3D_block, self).__init__()
-        self.default_scale = scale_tuple
 
         self.up_conv3D = nn.Sequential(
-            # nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
+            nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
             nn.InstanceNorm3d(out_ch),
             nn.ReLU(inplace=True), # increasing the depth by adding one below
@@ -253,16 +275,36 @@ class up_conv3D_block(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-    def forward(self, x, target_size=None):
-        """
-        Forward method altered to interpolate
-        """
-        if target_size is not None:
-            x = F.interpolate(x, size=target_size, mode="trilinear", align_corners=False)
-        else:
-            x = F.interpolate(x, scale_factor=self.default_scale, mode="trilinear", align_corners=False)
+    def forward(self, x):
         x = self.up_conv3D(x)
         return x
+    
+def crop_and_concat(e_in, d_in):
+    """
+    Crop / slice the encoding layers to fit concatenation
+    """
+    d_SA = None
+    _, _, ed, eh, ew = e_in.shape
+    _, _, dd, dh, dw = d_in.shape
+
+    if (ed, eh, ew) != (dd, dh, dw):
+        e_in = e_in[:, :, :dd, :dh, :dw]
+        d_SA = torch.cat([e_in, d_in], dim=1)
+    else:
+        d_SA = torch.cat([e_in, d_in], dim=1)
+    return d_SA
+
+def match_input_size(output, target):
+    """
+    Resample the final layer to fit the input size
+    """
+    _, _, d_output, h_output, w_output = output.shape
+    _, _, d_target, h_target, w_target = target.shape
+
+    if (d_output, h_output, w_output) != (d_target, h_target, w_target):
+         output = F.interpolate(output, size=(d_target, h_target, w_target), mode="trilinear", align_corners=False)
+
+    return output
 
 
 class UNet3D_2Module(nn.Module):

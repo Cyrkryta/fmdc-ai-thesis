@@ -13,7 +13,7 @@ from project.metrics_scripts.mean_fieldmaps import MeanFieldmapsMetricsComputati
 """
 Compute all performance metrics on a model
 """
-def main():
+def main(model="fieldmap"):
     # Parse and load arguments
     parser = argparse.ArgumentParser(description="Compute performance metrics for the fieldmap model.")
     parser.add_argument("--CHECKPOINT_PATH", required=True, help="Path to the model checkpoint.")
@@ -28,15 +28,21 @@ def main():
     with open(TEST_JSON_PATH, "r") as f:
         test_data = json.load(f)
     TEST_PATHS=test_data["test_paths"]
+    print(f"Processing {len(TEST_PATHS)} test samples")
 
-    # Initialize the metrics computation class with the test paths.
-    metrics_comp = FieldmapsModelMetricsComputation(
-        checkpoint_path=CHECKPOINT_PATH,
-        test_paths=TEST_PATHS,
-        device=device
-    )
-    # Compute and print metrics.
-    metrics_comp.compute_metrics()
+
+    if model=="fieldmap":
+        # Initialize the metrics computation class with the test paths.
+        metrics_comp = FieldmapsModelMetricsComputation(
+            CHECKPOINT_PATH=CHECKPOINT_PATH,
+            TEST_PATHS=TEST_PATHS,
+            device=device
+        )
+        test_paths = metrics_comp.get_subject_paths()
+        print(test_paths)
+        print("Skibidi I am right here")
+    #     # Compute and print metrics.
+        metrics_comp.compute_metrics()
 
 if __name__ == '__main__':
     main()

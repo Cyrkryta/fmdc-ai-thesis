@@ -63,6 +63,7 @@ class MetricsComputationBase(object):
 
             # Load the samples for a subject
             for sample in self.load_input_samples(subject_path):
+                # print(sample)
                 # Start time to figure how long it takes
                 start = time.time()
                 # Get the computed undistorted output
@@ -72,8 +73,9 @@ class MetricsComputationBase(object):
                 self.inference_compute_times.append(end - start)
 
                 # Retrieved the affined image for b0 and fieldmap
-                affine_b0 = sample['b0u_affine']
-                affine_fm = sample['fieldmap_affine']
+                # ... Why though??? This is kinda stupid
+                # affine_b0 = sample['b0u_affine']
+                # affine_fm = sample['fieldmap_affine']
 
                 # Retrieve the temporal correlation between undistorted gt and estimated (mask) from fieldmap
                 temporal_correlation_out.update(

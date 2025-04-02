@@ -21,6 +21,87 @@ def collect_all_subject_paths(dataset_paths):
 
     return subject_paths
 
+def load_data_from_path_for_test(subject_path):
+    """
+    Function only loading the de
+    """
+    # print("BEFORE creating paths")
+    # Define the test paths
+    b0d_mean_path = os.path.join(subject_path, "b0_d_mean.nii.gz")
+    b0d_path = os.path.join(subject_path, "b0_d.nii.gz")
+    b0u_path = os.path.join(subject_path, "b0_u.nii.gz")
+    b0_mask_path = os.path.join(subject_path, "b0_mask.nii.gz")
+    t1w_path = os.path.join(subject_path, "T1w.nii.gz")
+    fieldmap_path = os.path.join(subject_path, "field_map.nii.gz")
+    # print("AFTER creating paths")
+
+    # Retrieve metadata
+    # print("BEFORE dataset meta")
+    dataset_path = Path(subject_path).parent.absolute()
+    with open(os.path.join(dataset_path, 'dataset_meta.json')) as f:
+        dataset_meta = json.load(f)
+    # print("AFTER dataset meta")
+
+    # Load the images
+    # print("BEFORE loading images")
+    t1w = data_util.get_nii_img(t1w_path)
+    b0_mask = data_util.get_nii_img(b0_mask_path)
+    b0u = data_util.get_nii_img(b0u_path)
+    b0d = data_util.get_nii_img(b0d_path)
+    fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0]
+    echospacing = dataset_meta["echospacing"]
+    phaseencodingdirection = dataset_meta["phaseencodingdirection"]
+    # print("AFTER loading images")
+    # print("Shapes:")
+    # print(f"t1w: {t1w.shape}")
+    # print(f"b0 mask: {b0_mask.shape}")
+    # print(f"b0u: {b0u.shape}")
+    # print(f"b0d: {b0d.shape}")
+    # print(f"fieldmap: {fieldmap.shape}")
+
+    # Define the number of timesteps
+    number_timesteps = b0d.shape[3]
+
+    # print(f"BEFORE repeating")
+    # Repeat to fit timesteps
+    if len(t1w.shape) == 3:
+        t1w = np.repeat(t1w[None, :], number_timesteps, axis=0)
+        t1w = np.transpose(t1w, axes=(1, 2, 3, 0))
+    if len(fieldmap.shape) == 3:
+        fieldmap = np.repeat(fieldmap[None, :], number_timesteps, axis=0)
+        fieldmap = np.transpose(fieldmap, axes=(1, 2, 3, 0))
+    # print("AFTER repeating")
+    # print("New shapes")
+    # print(f"t1w: {t1w.shape}")
+    # print(f"fieldmap. {fieldmap.shape}")
+
+    # print("BEFORE converting to torch")
+    # Convert to torch format
+    t1w = data_util.nii2torch(t1w)
+    b0d = data_util.nii2torch(b0d)
+    b0u = data_util.niiu2torch(b0u)
+    b0_mask = data_util.niimask2torch(b0_mask, repetitions=number_timesteps) != 0
+    fieldmap = data_util.niiu2torch(fieldmap)
+    # print("AFTER converting to torch")
+
+    # Data normalization
+    t1w = data_util.normalize_img(t1w, 150, 0, 1, -1)  # Based on freesurfers T1 normalization
+    max_b0d = np.percentile(b0d, 99)  # This usually makes majority of CSF be the upper bound
+    min_b0d = 0  # Assumes lower bound is zero (direct from scanner)
+    b0d = data_util.normalize_img(b0d, max_b0d, min_b0d, 1, -1)
+    b0u = data_util.normalize_img(b0u, max_b0d, min_b0d, 1, -1)  # Use min() and max() from distorted data
+
+    b0_mask = np.array(b0_mask, dtype=np.uint8)
+
+    # Retrieve affines
+    b0d_affine = nib.load(b0d_path).affine
+    b0d_affine = np.repeat(b0d_affine[None, :], number_timesteps, axis=0)
+    fieldmap_affine = nib.load(fieldmap_path).affine
+    fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
+
+    return (t1w, b0d, b0u, b0_mask, fieldmap, b0d_affine, fieldmap_affine, echospacing, phaseencodingdirection)
+
+
 def load_data_from_path_for_train(subject_path):
     # Collect paths
     t1_path = os.path.join(subject_path, "T1w.nii.gz")
@@ -35,6 +116,16 @@ def load_data_from_path_for_train(subject_path):
     # Get image
     img_t1 = data_util.get_nii_img(t1_path)
     img_b0_d_10 = data_util.get_nii_img(b0_d_10_path)
+    """
+    START FOR CREATING SINGLE SET
+    """
+    # img_b0_d_10 = img_b0_d_10[..., img_b0_d_10.shape[3] // 2]
+    # img_b0_d_10 = np.expand_dims(img_b0_d_10, axis=0).transpose(1,2,3,0)
+    mid = img_b0_d_10.shape[3] // 2
+    img_b0_d_10 = img_b0_d_10[..., mid-2:mid+3]
+    """
+    END FOR CREATING SINGLE SET
+    """
     img_fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0]
 
     # Calculate timesteps and extend

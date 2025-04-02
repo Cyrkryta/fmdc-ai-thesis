@@ -26,12 +26,12 @@ class LazyFMRIDataset(Dataset):
         self.device = device
         self.mode = mode
         self.index_mapping = []
-        
-        for SUBJECT_PATH in self.SUBJECT_PATHS:
-            # Retrieve subject information
-            project = os.path.basename(os.path.dirname(SUBJECT_PATH))
 
-            if self.mode == "train":
+        if self.mode == "train":
+            for SUBJECT_PATH in self.SUBJECT_PATHS:
+                # Retrieve subject information
+                project = os.path.basename(os.path.dirname(SUBJECT_PATH))
+
                 img_t1, _, _, _, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
                 num_samples = len(img_t1)
 
@@ -45,35 +45,32 @@ class LazyFMRIDataset(Dataset):
     def __getitem__(self, idx):
         # Retrieve the information
         SUBJECT_PATH, timepoint_idx, _ = self.index_mapping[idx]
-        img_t1, img_b0_d_10, img_fieldmap, _, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
+        if self.mode == "train":
+            img_t1, img_b0_d_10, img_fieldmap, _, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
 
-        # Define the data (particular timepoint)
-        data = {
-            "b0_d_10": img_b0_d_10[timepoint_idx, :, :, :],
-            "t1": img_t1[timepoint_idx, :, :, :],
-            "fieldmap": img_fieldmap[timepoint_idx, :, :, :, :] # [H, W, D]
-        }
+            # Define the data (particular timepoint)
+            data = {
+                "b0_d_10": img_b0_d_10[timepoint_idx, :, :, :],
+                "t1": img_t1[timepoint_idx, :, :, :],
+                "fieldmap": img_fieldmap[timepoint_idx, :, :, :, :] # [H, W, D]
+            }
 
+            # Define the 2-channel input
+            img_data = torch.stack((torch.from_numpy(data['b0_d_10']).float().to(self.device), torch.from_numpy(data['t1']).float().to(self.device)))
+            # print(img_data.shape)
+            fieldmap = torch.from_numpy(data["fieldmap"]).float().to(self.device)
+            # print(fieldmap.shape)
 
+            output = {
+                "img_data": img_data,
+                "fieldmap": fieldmap,
+            }
 
-        # # Retrieve fieldmap and echo spacing
-        # fieldmap_affine_item = fieldmap_affine[timepoint_idx]
-        # echo_spacing_item = echo_spacing[timepoint_idx]
+            return output
 
-        # Define the 2-channel input
-        img_data = torch.stack((torch.from_numpy(data['b0_d_10']).float().to(self.device), torch.from_numpy(data['t1']).float().to(self.device)))
-        # print(img_data.shape)
-        fieldmap = torch.from_numpy(data["fieldmap"]).float().to(self.device)
-        # print(fieldmap.shape)
-
-        output = {
-            "img_data": img_data,
-            "fieldmap": fieldmap,
+            # # Retrieve fieldmap and echo spacing
+            # fieldmap_affine_item = fieldmap_affine[timepoint_idx]
+            # echo_spacing_item = echo_spacing[timepoint_idx]
             # "fieldmap_affine": torch.from_numpy(fieldmap_affine_item).float().to(self.device),
             # "echo_spacing": torch.from_numpy(np.asarray(echo_spacing_item)).float().to(self.device)
             # "unwarp_direction": unwarp_direction
-        }
-
-        return output
-
-
