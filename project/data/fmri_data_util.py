@@ -121,8 +121,8 @@ def load_data_from_path_for_train(subject_path):
     """
     # img_b0_d_10 = img_b0_d_10[..., img_b0_d_10.shape[3] // 2]
     # img_b0_d_10 = np.expand_dims(img_b0_d_10, axis=0).transpose(1,2,3,0)
-    mid = img_b0_d_10.shape[3] // 2
-    img_b0_d_10 = img_b0_d_10[..., mid-2:mid+3]
+    # mid = img_b0_d_10.shape[3] // 2
+    # img_b0_d_10 = img_b0_d_10[..., mid-2:mid+3]
     """
     END FOR CREATING SINGLE SET
     """

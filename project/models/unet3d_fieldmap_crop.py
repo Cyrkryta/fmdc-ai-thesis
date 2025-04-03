@@ -296,7 +296,7 @@ def crop_and_concat(e_in, d_in):
 
 def match_input_size(output, target):
     """
-    Resample the final layer to fit the input size
+    Resample the final layer output to fit the input size
     """
     _, _, d_output, h_output, w_output = output.shape
     _, _, d_target, h_target, w_target = target.shape
@@ -336,6 +336,7 @@ class UNet3D_2Module(nn.Module):
 
 
     def forward(self, e_SA):
+        e_SA_original = e_SA
         # PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
         # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "caching_allocator"
         # SA network's encoder
@@ -376,45 +377,51 @@ class UNet3D_2Module(nn.Module):
 
         # SA network's decoder
         # d_SA = self.up_Conv3D_1(e_SA_6)
-        d_SA = self.up_Conv3D_1(e_SA_6, e_SA_5.shape[2:])
+        d_SA = self.up_Conv3D_1(e_SA_6)
         # print("D1:", d_SA.shape)
 
-        d_SA = torch.cat([e_SA_5, d_SA], dim=1)
+        d_SA = crop_and_concat(e_SA_5, d_SA)
+        # d_SA = torch.cat([e_SA_5, d_SA], dim=1)
         # print("D2:", d_SA.shape)
 
         # d_SA = self.up_Conv3D_2(d_SA)
-        d_SA = self.up_Conv3D_2(d_SA, e_SA_4.shape[2:])
+        d_SA = self.up_Conv3D_2(d_SA)
         # print("D3:", d_SA.shape)
         
-        d_SA = torch.cat([e_SA_4, d_SA], dim=1)
+        d_SA = crop_and_concat(e_SA_4, d_SA)
+        # d_SA = torch.cat([e_SA_4, d_SA], dim=1)
         # print("D4:", d_SA.shape)
         
         # d_SA = self.up_Conv3D_3(d_SA)
-        d_SA = self.up_Conv3D_3(d_SA, e_SA_3.shape[2:])
+        d_SA = self.up_Conv3D_3(d_SA)
         # print("D5:", d_SA.shape)
         
-        d_SA = torch.cat([e_SA_3, d_SA], dim=1)
+        d_SA = crop_and_concat(e_SA_3, d_SA)
+        # d_SA = torch.cat([e_SA_3, d_SA], dim=1)
         # print("D6:", d_SA.shape)
         
         # d_SA = self.up_Conv3D_4(d_SA)
-        d_SA = self.up_Conv3D_4(d_SA, e_SA_2.shape[2:])
+        d_SA = self.up_Conv3D_4(d_SA)
         # print("D7:", d_SA.shape)
         
-        d_SA = torch.cat([e_SA_2, d_SA], dim=1)
+        d_SA = crop_and_concat(e_SA_2, d_SA)
+        # d_SA = torch.cat([e_SA_2, d_SA], dim=1)
         # print("D8:", d_SA.shape)
         
         # d_SA = self.up_Conv3D_5(d_SA)
-        d_SA = self.up_Conv3D_5(d_SA, e_SA_1.shape[2:])
+        d_SA = self.up_Conv3D_5(d_SA)
         # print("D9:", d_SA.shape)
-        
-        d_SA = torch.cat([e_SA_1, d_SA], dim=1)
+
+        d_SA = crop_and_concat(e_SA_1, d_SA)
+        # d_SA = torch.cat([e_SA_1, d_SA], dim=1)
         # print("D10:", d_SA.shape)
         
         d_SA = self.Conv3D_final(d_SA)
         # print("D11:", d_SA.shape)
 
+        d_SA = match_input_size(d_SA, e_SA_original)
+
         del (e_SA_1, e_SA_2, e_SA_3, e_SA_4, e_SA_5)
     
         # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = ""
-
         return d_SA

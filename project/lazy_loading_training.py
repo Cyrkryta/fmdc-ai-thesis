@@ -8,6 +8,7 @@ from tqdm import tqdm
 from project.data.lazy_fmri_datamodule import FMRIDataModule
 # from project.data.custom_fmri_datamodule import FMRIDataModule
 from models.unet3d_fieldmap import UNet3DFieldmap
+# from models.unet3d_fieldmap_crop import UNet3DFieldmap
 from datetime import datetime
 
 if __name__ == "__main__":
@@ -44,45 +45,53 @@ if __name__ == "__main__":
     data_module.prepare_data()
 
     # If we get past prepare data, then create the model
-    model = UNet3DFieldmap()
     
     # Setting up weights and biases
-    wandb.init(project='field-map-ai')
-    wandb_logger = WandbLogger(project='field-map-ai')
-    
-    # Define checkpoints
-    checkpoint_prefix = f"{wandb.run.id}_"
-    every_n_epochs = 10
-    val_every_n_epoch = 1
-    # log_every_n_steps = 50
-    log_every_n_steps = 18
+    # wandb.init(project='field-map-ai')
+    # wandb_logger = WandbLogger(project='field-map-ai')
+    for model_idx in range(5):
+        wandb_run = wandb.init(project="field-map-ai", reinit=True)
+        wandb_logger = WandbLogger(project="field-map-ai", id=wandb_run.id, log_model=True)
+        
+        # Define checkpoints
+        # checkpoint_prefix = f"{wandb.run.id}_"
+        checkpoint_prefix = f"{wandb_run.id}_model{model_idx}_"
+        every_n_epochs = 10
+        val_every_n_epoch = 1
+        # log_every_n_steps = 50
+        log_every_n_steps = 50
 
-    # Define callbacks
-    checkpoint_callback = ModelCheckpoint(
-        dirpath=CHECKPOINT_PATH,
-        filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}_" + f"{datetime.now().strftime('%d-%Y')}",
-        every_n_epochs=every_n_epochs,
-        save_top_k=1,
-        monitor="val_loss",
-        save_last=True
-    )
+        # Define callbacks
+        checkpoint_callback = ModelCheckpoint(
+            dirpath=CHECKPOINT_PATH,
+            filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}_" + f"{datetime.now().strftime('%d-%Y')}",
+            every_n_epochs=every_n_epochs,
+            save_top_k=1,
+            monitor="val_loss",
+            save_last=True
+        )
 
-    # Early stopping callback
-    early_stop_callback = EarlyStopping(monitor="val_loss", mode="min", min_delta=10, patience=5)
+        # Early stopping callback
+        early_stop_callback = EarlyStopping(monitor="val_loss", mode="min", min_delta=10, patience=5)
 
-    # Set up the trainer
-    trainer = L.Trainer(
-        max_epochs=max_epochs,
-        log_every_n_steps=log_every_n_steps,
-        callbacks=[checkpoint_callback, early_stop_callback],
-        default_root_dir=CHECKPOINT_PATH,
-        check_val_every_n_epoch=val_every_n_epoch,
-        logger=wandb_logger
-    )
+        model = UNet3DFieldmap()
 
-    # Train / fit the model
-    trainer.fit(
-        model=model,
-        train_dataloaders = data_module.train_dataloader(),
-        val_dataloaders = data_module.val_dataloader()
-    )
+        # Set up the trainer
+        trainer = L.Trainer(
+            max_epochs=max_epochs,
+            log_every_n_steps=log_every_n_steps,
+            callbacks=[checkpoint_callback, early_stop_callback],
+            default_root_dir=CHECKPOINT_PATH,
+            check_val_every_n_epoch=val_every_n_epoch,
+            logger=wandb_logger
+        )
+
+        # Train / fit the model
+        trainer.fit(
+            model=model,
+            train_dataloaders = data_module.train_dataloader(),
+            val_dataloaders = data_module.val_dataloader()
+        )
+
+        # Finish the wand be run
+        wandb_run.finish()
