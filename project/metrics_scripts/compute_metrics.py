@@ -9,11 +9,12 @@ from project.metrics_scripts.direct_model import DirectModelMetricsComputation
 from project.metrics_scripts.fieldmaps_model import FieldmapsModelMetricsComputation
 from project.metrics_scripts.k_fold_fieldmaps_model import KFoldFieldmapsModelMetricsComputation
 from project.metrics_scripts.mean_fieldmaps import MeanFieldmapsMetricsComputation
+import os
 
 """
 Compute all performance metrics on a model
 """
-def main(model="fieldmap"):
+def main(model="k-fold-cross-validation"):
     # Parse and load arguments
     parser = argparse.ArgumentParser(description="Compute performance metrics for the fieldmap model.")
     parser.add_argument("--CHECKPOINT_PATH", required=True, help="Path to the model checkpoint.")
@@ -41,45 +42,45 @@ def main(model="fieldmap"):
         test_paths = metrics_comp.get_subject_paths()
         print(test_paths)
         print("Skibidi I am right here")
-    #     # Compute and print metrics.
+        # Compute and print metrics.
         metrics_comp.compute_metrics()
+    
+    # elif model=="k-fold-cross-validation":
+    #     dataset_paths = TEST_PATHS
+    #     k_fold = KFold(n_splits=5, shuffle=True, random_state=42)
+    #     model_paths = [
+    #         "ejla3ly1_model0_unet3d2_epoch=129_val_loss=1357.99377_03-2025.ckpt",
+    #         "zkvba6sq_model1_unet3d2_epoch=139_val_loss=1338.77039_04-2025.ckpt",
+    #         "g8pmspp9_model2_unet3d2_epoch=139_val_loss=1294.42419_04-2025.ckpt",
+    #         "xwp1h25f_model3_unet3d2_epoch=129_val_loss=1319.20850_05-2025.ckpt",
+    #         "rkkpv136_model4_unet3d2_epoch=129_val_loss=1359.35706_05-2025.ckpt"
+    #     ]
+    #     full_model_paths = [os.path.join(CHECKPOINT_PATH, "k-fold_cross_validation", f"model_{idx}", model) for idx, model in enumerate(model_paths)]
+
+    #     for fold, (_, val_idx) in enumerate(k_fold.split(dataset_paths)):
+    #         test_paths = [dataset_paths[index] for index in val_idx]
+    #         print(f"Fold {fold}:")
+    #         print(test_paths)
+
+    #         KFoldFieldmapsModelMetricsComputation(
+    #             CHECKPOINT_PATH=full_model_paths[fold],
+    #             TEST_PATHS=test_paths,
+    #             device=device
+    #         ).compute_metrics()
+        
+
+
+
+
+            # KFoldFieldmapsModelMetricsComputation(
+            #     checkpoint_path=full_model_paths[fold],
+            #     subject_paths=test_paths
+            # )
+        pass
 
 if __name__ == '__main__':
     main()
-    # # Define what model to compute
-    # mode = 'fieldmaps-mode'
 
-    # # Evaluating the fieldmap model
-    # if mode == 'fieldmaps-model':
-    #     metrics_computation = FieldmapsModelMetricsComputation(
-    #         checkpoint_path='/home/mlc/dev/fmdc/trained-models/jan-models/jan_ruby-sunset-unet3d2_epoch=4799_val_loss=2670.47461.ckpt',
-    #         dataset_root='/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds*/',
-    #         device=
-    #     ).compute_metrics()
-    
-    # # Evalauting the k-fold fieldmap model
-    # elif mode == 'k-fold-fieldmaps-model':
-    #     # TODO: Do this with an actual held-out test set instead!
-    #     # Setup the dataset and kfold
-    #     dataset_paths = fmri_data_util.collect_all_subject_paths(dataset_paths=glob.glob('/Users/jan/Downloads/openneuro-datasets/preprocessed/ds*/'))
-    #     kf = KFold(n_splits=10, shuffle=True, random_state=0)
-
-    #     # Define checkpoints to compute folds on
-    #     checkpoints_for_folds = [
-    #         'd81m39le_unet3d2_epoch=3199_val_loss=2123.65649.ckpt',
-    #         'xom4ggju_unet3d2_epoch=3699_val_loss=3404.03809.ckpt',
-    #         'x8ysdqfk_unet3d2_epoch=3099_val_loss=2387.13867.ckpt',
-    #         'lqhdvqhw_unet3d2_epoch=4199_val_loss=2835.27222.ckpt',
-    #         'jzeqtjv7_unet3d2_epoch=3199_val_loss=1815.36096.ckpt',
-    #         'm2t3mxvg_unet3d2_epoch=2799_val_loss=2568.07300.ckpt',
-    #         'gc0q963r_unet3d2_epoch=2699_val_loss=2184.26831.ckpt',
-    #         'soebecyo_unet3d2_epoch=3099_val_loss=2418.63208.ckpt',
-    #         'knkd6h4l_unet3d2_epoch=3599_val_loss=2835.74487.ckpt',
-    #         '6twf1mhu_unet3d2_epoch=2699_val_loss=2540.18726.ckpt'
-    #     ]
-
-    #     # Full path to the checkpoints
-    #     checkpoint_paths = [f'/Users/jan/Downloads/k-fold-validation-ckpts/{v}' for v in checkpoints_for_folds]
 
     #     # Go through each of the folds and compute the metrics
     #     for fold, (_, val_idx) in enumerate(kf.split(dataset_paths)):
@@ -114,3 +115,42 @@ if __name__ == '__main__':
     #         subject_paths='/Users/jan/Downloads/openneuro-datasets/preprocessed-average-fieldmaps/ds*/sub-*/',
     #         device='cpu'
     #     ).compute_metrics()
+
+
+    # ---------------------------------------------------------
+
+
+    # # Define what model to compute
+    # mode = 'fieldmaps-mode'
+
+    # # Evaluating the fieldmap model
+    # if mode == 'fieldmaps-model':
+    #     metrics_computation = FieldmapsModelMetricsComputation(
+    #         checkpoint_path='/home/mlc/dev/fmdc/trained-models/jan-models/jan_ruby-sunset-unet3d2_epoch=4799_val_loss=2670.47461.ckpt',
+    #         dataset_root='/home/mlc/dev/fmdc/downloads/openneuro-datasets/preprocessed/ds*/',
+    #         device=
+    #     ).compute_metrics()
+
+    # # Evalauting the k-fold fieldmap model
+    # elif mode == 'k-fold-fieldmaps-model':
+    #     # TODO: Do this with an actual held-out test set instead!
+    #     # Setup the dataset and kfold
+    #     dataset_paths = fmri_data_util.collect_all_subject_paths(dataset_paths=glob.glob('/Users/jan/Downloads/openneuro-datasets/preprocessed/ds*/'))
+    #     kf = KFold(n_splits=10, shuffle=True, random_state=0)
+
+    #     # Define checkpoints to compute folds on
+    #     checkpoints_for_folds = [
+    #         'd81m39le_unet3d2_epoch=3199_val_loss=2123.65649.ckpt',
+    #         'xom4ggju_unet3d2_epoch=3699_val_loss=3404.03809.ckpt',
+    #         'x8ysdqfk_unet3d2_epoch=3099_val_loss=2387.13867.ckpt',
+    #         'lqhdvqhw_unet3d2_epoch=4199_val_loss=2835.27222.ckpt',
+    #         'jzeqtjv7_unet3d2_epoch=3199_val_loss=1815.36096.ckpt',
+    #         'm2t3mxvg_unet3d2_epoch=2799_val_loss=2568.07300.ckpt',
+    #         'gc0q963r_unet3d2_epoch=2699_val_loss=2184.26831.ckpt',
+    #         'soebecyo_unet3d2_epoch=3099_val_loss=2418.63208.ckpt',
+    #         'knkd6h4l_unet3d2_epoch=3599_val_loss=2835.74487.ckpt',
+    #         '6twf1mhu_unet3d2_epoch=2699_val_loss=2540.18726.ckpt'
+    #     ]
+
+    #     # Full path to the checkpoints
+    #     checkpoint_paths = [f'/Users/jan/Downloads/k-fold-validation-ckpts/{v}' for v in checkpoints_for_folds]

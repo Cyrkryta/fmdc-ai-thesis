@@ -82,12 +82,14 @@ class FMRIDataModule(pl.LightningDataModule):
             sys.exit(0)
 
     def train_dataloader(self):
+        print("Creating train loader")
         from project.data.custom_fmri_sampler import FMRICustomSampler, get_project_key
         dataset = LazyFMRIDataset(self.train_dataset, device=self.device, mode="train")
         sampler = FMRICustomSampler(dataset, batch_size=self.batch_size, key_fn=get_project_key)
         return DataLoader(dataset, batch_sampler=sampler, num_workers=2, persistent_workers=True)
     
     def val_dataloader(self):
+        print("Creating validation loader")
         from project.data.custom_fmri_sampler import FMRICustomSampler, get_project_key
         dataset = LazyFMRIDataset(self.val_dataset, device=self.device, mode="train")
         sampler = FMRICustomSampler(dataset, batch_size=self.batch_size, key_fn=get_project_key)

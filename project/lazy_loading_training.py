@@ -28,12 +28,14 @@ if __name__ == "__main__":
     batch_size = args.batch_size
     TEST_DATASET_PATHS = glob.glob(args.TEST_DATASET_PATH)
 
+    print(f"Getting device")
     device = "cpu"
     if torch.cuda.is_available():
         torch.multiprocessing.set_start_method("spawn")
         device = "cuda"
     print(f"Running on {device}")
 
+    print("Defining data module")
     data_module = FMRIDataModule(
         TRAIN_DATASET_PATHS=TRAINING_DATASET_PATHS,
         DATASET_SAVE_ROOT=DATASET_SAVE_ROOT,
@@ -42,6 +44,7 @@ if __name__ == "__main__":
         batch_size=batch_size
     )
 
+    print("Splitting data")
     data_module.prepare_data()
 
     # If we get past prepare data, then create the model
@@ -49,49 +52,54 @@ if __name__ == "__main__":
     # Setting up weights and biases
     # wandb.init(project='field-map-ai')
     # wandb_logger = WandbLogger(project='field-map-ai')
-    for model_idx in range(5):
-        wandb_run = wandb.init(project="field-map-ai", reinit=True)
-        wandb_logger = WandbLogger(project="field-map-ai", id=wandb_run.id, log_model=True)
-        
-        # Define checkpoints
-        # checkpoint_prefix = f"{wandb.run.id}_"
-        checkpoint_prefix = f"{wandb_run.id}_model{model_idx}_"
-        every_n_epochs = 10
-        val_every_n_epoch = 1
-        # log_every_n_steps = 50
-        log_every_n_steps = 50
+    print("Setting up WandB")
+    wandb_run = wandb.init(project="field-map-ai", reinit=True)
+    wandb_logger = WandbLogger(project="field-map-ai", id=wandb_run.id, log_model=True)
+    
+    # Define checkpoints
+    # checkpoint_prefix = f"{wandb.run.id}_"
+    checkpoint_prefix = f"{wandb_run.id}_"
+    every_n_epochs = 10
+    val_every_n_epoch = 1
+    # log_every_n_steps = 50
+    log_every_n_steps = 50
 
-        # Define callbacks
-        checkpoint_callback = ModelCheckpoint(
-            dirpath=CHECKPOINT_PATH,
-            filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}_" + f"{datetime.now().strftime('%d-%Y')}",
-            every_n_epochs=every_n_epochs,
-            save_top_k=1,
-            monitor="val_loss",
-            save_last=True
-        )
+    # Define callbacks
+    print("setting up checkpoint")
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=CHECKPOINT_PATH,
+        filename=checkpoint_prefix + "unet3d2_{epoch:02d}_{val_loss:.5f}_" + f"{datetime.now().strftime('%d-%Y')}",
+        every_n_epochs=every_n_epochs,
+        save_top_k=1,
+        monitor="val_loss",
+        save_last=True
+    )
 
-        # Early stopping callback
-        early_stop_callback = EarlyStopping(monitor="val_loss", mode="min", min_delta=10, patience=5)
+    # Early stopping callback
+    print("Setting up early stopping")
+    early_stop_callback = EarlyStopping(monitor="val_loss", mode="min", min_delta=10, patience=5)
 
-        model = UNet3DFieldmap()
+    print("Setting up model")
+    model = UNet3DFieldmap()
 
-        # Set up the trainer
-        trainer = L.Trainer(
-            max_epochs=max_epochs,
-            log_every_n_steps=log_every_n_steps,
-            callbacks=[checkpoint_callback, early_stop_callback],
-            default_root_dir=CHECKPOINT_PATH,
-            check_val_every_n_epoch=val_every_n_epoch,
-            logger=wandb_logger
-        )
+    print("Setting up Trainer")
+    # Set up the trainer
+    trainer = L.Trainer(
+        max_epochs=max_epochs,
+        log_every_n_steps=log_every_n_steps,
+        callbacks=[checkpoint_callback, early_stop_callback],
+        default_root_dir=CHECKPOINT_PATH,
+        check_val_every_n_epoch=val_every_n_epoch,
+        logger=wandb_logger
+    )
 
-        # Train / fit the model
-        trainer.fit(
-            model=model,
-            train_dataloaders = data_module.train_dataloader(),
-            val_dataloaders = data_module.val_dataloader()
-        )
+    # Train / fit the model
+    print("Training the model...")
+    trainer.fit(
+        model=model,
+        train_dataloaders = data_module.train_dataloader(),
+        val_dataloaders = data_module.val_dataloader()
+    )
 
-        # Finish the wand be run
-        wandb_run.finish()
+    # Finish the wand be run
+    wandb_run.finish()
