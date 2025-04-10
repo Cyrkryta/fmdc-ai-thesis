@@ -71,7 +71,7 @@ if __name__ == '__main__':
     k_fold = KFold(n_splits=10, shuffle=True, random_state=42)
 
     # Train each of the folds
-    for fold, (train_idx, val_idx) in enumerate(tqdm(k_fold.split(DATASET_PATHS))):
+    for fold, (train_idx, val_idx) in enumerate(k_fold.split(DATASET_PATHS)):
         # Check if the fold is already trained. Continue if True
         if fold in completed_folds:
             print(f"Fold {fold} has already been trained, skipping...")
@@ -86,7 +86,7 @@ if __name__ == '__main__':
         wandb_run = wandb.init(project="field-map-ai", reinit=True)
         wandb_logger = WandbLogger(project="field-map-ai", id=wandb_run.id, log_model=True)
         checkpoint_prefix = f"{wandb_run.id}_model{fold}_"
-        every_n_epochs = 5
+        every_n_epochs = 10
         val_every_n_epoch = 1
         log_every_n_steps = 50
         print(f"\nUpdating model every {every_n_epochs} epochs")
@@ -100,7 +100,8 @@ if __name__ == '__main__':
             filename = checkpoint_prefix + "unet3d_{epoch:02d}_{val_loss:.5f}",
             every_n_epochs = every_n_epochs,
             save_top_k = 1,
-            monitor = "val_loss"
+            monitor = "val_loss",
+            save_last=True
         )
         print("Checkpoint callback set up\n")
         

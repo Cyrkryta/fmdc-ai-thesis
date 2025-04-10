@@ -10,7 +10,7 @@ def precache_all_subjects(subject_paths):
     """
     for subject_path in subject_paths:
         try:
-            load_data_from_path_for_train(subject_path=subject_path, use_cache=True)
+            load_data_from_path_for_train(subject_path=subject_path, use_cache=True, use_saved_nifti=True)
         except Exception as e:
             print(f"Error processing {subject_path}: {e}")
 

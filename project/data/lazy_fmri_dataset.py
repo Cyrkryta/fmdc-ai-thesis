@@ -32,7 +32,8 @@ class LazyFMRIDataset(Dataset):
                 # Retrieve subject information
                 project = os.path.basename(os.path.dirname(SUBJECT_PATH))
 
-                img_t1, _, _, _, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
+                # img_t1, _, _, _, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
+                img_t1, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH, use_saved_nifti=True)
                 num_samples = len(img_t1)
 
                 # Split temporally
@@ -46,7 +47,8 @@ class LazyFMRIDataset(Dataset):
         # Retrieve the information
         SUBJECT_PATH, timepoint_idx, _ = self.index_mapping[idx]
         if self.mode == "train":
-            img_t1, img_b0_d_10, img_fieldmap, _, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
+            # img_t1, img_b0_d_10, img_fieldmap, _, _, _ = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH)
+            img_t1, img_b0_d_10, img_fieldmap = fmri_data_util.load_data_from_path_for_train(SUBJECT_PATH, use_saved_nifti=True)
 
             # Define the data (particular timepoint)
             data = {

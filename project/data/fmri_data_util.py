@@ -103,23 +103,25 @@ def load_data_from_path_for_test(subject_path):
     return (t1w, b0d, b0u, b0_mask, fieldmap, b0d_affine, fieldmap_affine, echospacing, phaseencodingdirection)
 
 
-def load_data_from_path_for_train(subject_path, use_cache=True):
+def load_data_from_path_for_train(subject_path, use_cache=True, use_saved_nifti=True):
+    cached_dir = os.path.join(subject_path, "cache")
+    cached_T1 = os.path.join(cached_dir, "processed_T1w.nii.gz")
+    cached_b0 = os.path.join(cached_dir, "processed_b0_d_10.nii.gz")
+    cached_fieldmap = os.path.join(cached_dir, "processed_fieldmap.nii.gz")
 
-    cache_dir = os.path.join(subject_path, "cache")
-    os.makedirs(cache_dir, exist_ok=True)
-    cache_file = os.path.join(cache_dir, "sample_train_data.pt")
+    if use_saved_nifti and os.path.exists(cached_T1) and os.path.exists(cached_b0) and os.path.exists(cached_fieldmap):
+        # print(f"Loading preprocessed NIFTI files for subject: {subject_path}")
+        img_t1 = nib.load(cached_T1).get_fdata()
+        img_b0_d_10 = nib.load(cached_b0).get_fdata()
+        img_fieldmap = nib.load(cached_fieldmap).get_fdata()
 
-    if use_cache and os.path.exists(cache_file):
-        # print(f"Loading cached data for subject: {subject_path}")
-        cached_data = torch.load(cache_file, weights_only=False)
-        return (
-            cached_data["img_t1"],
-            cached_data["img_b0_d_10"],
-            cached_data["img_fieldmap"],
-            cached_data["fieldmap_affine"],
-            cached_data["echo_spacing"],
-            cached_data["unwarp_direction"]
-        )
+        # img_t1 = torch.from_numpy(img_t1)
+        # img_b0_d_10 = torch.from_numpy(img_b0_d_10)
+        # img_fieldmap = torch.from_numpy(img_fieldmap)
+
+        return (img_t1, img_b0_d_10, img_fieldmap)
+    
+    # print(f"Cached NIFTI files not found for subject: {subject_path}. Processing raw data...")
 
     t1_path = os.path.join(subject_path, "T1w.nii.gz")
     b0_d_10_path = os.path.join(subject_path, "b0_d_10.nii.gz")
@@ -148,31 +150,31 @@ def load_data_from_path_for_train(subject_path, use_cache=True):
     img_fieldmap = data_util.niiu2torch(img_fieldmap)
 
     # Normalize data
-    img_t1 = data_util.normalize_img(img_t1, 150, 0, 1, -1)  # Based on freesurfers T1 normalization
-    max_img_b0_d = np.percentile(img_b0_d_10, 99)  # This usually makes majority of CSF be the upper bound
-    min_img_b0_d = 0  # Assumes lower bound is zero (direct from scanner)
+    img_t1 = data_util.normalize_img(img_t1, 150, 0, 1, -1)
+    max_img_b0_d = np.percentile(img_b0_d_10, 99)
+    min_img_b0_d = 0
     img_b0_d_10 = data_util.normalize_img(img_b0_d_10, max_img_b0_d, min_img_b0_d, 1, -1)
 
-    fieldmap_affine = nib.load(fieldmap_path).affine
-    fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
+    # # Retrieving affines
+    # fieldmap_affine = nib.load(fieldmap_path).affine
+    # fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
+    # echo_spacing = np.array(dataset_meta['echospacing'])
+    # echo_spacing = np.repeat(echo_spacing, number_timesteps, axis=0)
+    # unwarp_direction = dataset_meta["phaseencodingdirection"]
+    # unwarp_direction = np.array([unwarp_direction] * number_timesteps)
 
-    echo_spacing = np.array(dataset_meta['echospacing'])
-    echo_spacing = np.repeat(echo_spacing, number_timesteps, axis=0)
+    # Caching the data
+    os.makedirs(cached_dir, exist_ok=True)
+    t1_nii = nib.Nifti1Image(img_t1, nib.load(t1_path).affine)
+    b0_nii = nib.Nifti1Image(img_b0_d_10, nib.load(b0_d_10_path).affine)
+    fieldmap_nii = nib.Nifti1Image(img_fieldmap, nib.load(fieldmap_path).affine)
+    nib.save(t1_nii, cached_T1)
+    nib.save(b0_nii, cached_b0)
+    nib.save(fieldmap_nii, cached_fieldmap)
 
-    unwarp_direction = dataset_meta["phaseencodingdirection"]
-    unwarp_direction = np.array([unwarp_direction] * number_timesteps)
+    print(f"Processed NIFTI files aved for subject: {subject_path} in {cached_dir}!")
 
-    processed_data = {
-        "img_t1": img_t1,
-        "img_b0_d_10": img_b0_d_10,
-        "img_fieldmap": img_fieldmap,
-        "fieldmap_affine": fieldmap_affine,
-        "echo_spacing": echo_spacing,
-        "unwarp_direction": unwarp_direction
-    }
-    torch.save(processed_data, cache_file)
-    # print(f"Processed data cached for subject: {subject_path} at {cache_file}")
-    return (img_t1, img_b0_d_10, img_fieldmap, fieldmap_affine, echo_spacing, unwarp_direction)
+    return (img_t1, img_b0_d_10, img_fieldmap)
 
 # def load_data_from_path_for_train(subject_path):
 #     # Collect paths
@@ -181,23 +183,13 @@ def load_data_from_path_for_train(subject_path, use_cache=True):
 #     fieldmap_path = os.path.join(subject_path, "field_map.nii.gz")
 
 #     # Retrieve dataset path
-#     dataset_path = Path(subject_path).parent.absolute()
-#     with open(os.path.join(dataset_path, 'dataset_meta.json')) as f:
-#         dataset_meta = json.load(f)
+#     # dataset_path = Path(subject_path).parent.absolute()
+#     # with open(os.path.join(dataset_path, 'dataset_meta.json')) as f:
+#     #     dataset_meta = json.load(f)
 
 #     # Get image
 #     img_t1 = data_util.get_nii_img(t1_path)
 #     img_b0_d_10 = data_util.get_nii_img(b0_d_10_path)
-#     """
-#     START FOR CREATING SINGLE SET
-#     """
-#     # img_b0_d_10 = img_b0_d_10[..., img_b0_d_10.shape[3] // 2]
-#     # img_b0_d_10 = np.expand_dims(img_b0_d_10, axis=0).transpose(1,2,3,0)
-#     # mid = img_b0_d_10.shape[3] // 2
-#     # img_b0_d_10 = img_b0_d_10[..., mid-2:mid+3]
-#     """
-#     END FOR CREATING SINGLE SET
-#     """
 #     img_fieldmap = data_util.get_nii_img(fieldmap_path)[:, :, :, 0]
 
 #     # Calculate timesteps and extend
@@ -223,18 +215,18 @@ def load_data_from_path_for_train(subject_path, use_cache=True):
 #     min_img_b0_d = 0  # Assumes lower bound is zero (direct from scanner)
 #     img_b0_d_10 = data_util.normalize_img(img_b0_d_10, max_img_b0_d, min_img_b0_d, 1, -1)
 
-#     fieldmap_affine = nib.load(fieldmap_path).affine
-#     fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
+#     # fieldmap_affine = nib.load(fieldmap_path).affine
+#     # fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
 
-#     echo_spacing = np.array(dataset_meta['echospacing'])
-#     echo_spacing = np.repeat(echo_spacing, number_timesteps, axis=0)
+#     # echo_spacing = np.array(dataset_meta['echospacing'])
+#     # echo_spacing = np.repeat(echo_spacing, number_timesteps, axis=0)
 
-#     unwarp_direction = dataset_meta["phaseencodingdirection"]
-#     unwarp_direction = np.array([unwarp_direction] * number_timesteps)
+#     # unwarp_direction = dataset_meta["phaseencodingdirection"]
+#     # unwarp_direction = np.array([unwarp_direction] * number_timesteps)
 #     # unwarp_direction = np.repeat(unwarp_direction, number_timesteps, axis=0)
 
 #     # Return the loaded images along with the test images if available
-#     return (img_t1, img_b0_d_10, img_fieldmap, fieldmap_affine, echo_spacing, unwarp_direction)
+#     return (img_t1, img_b0_d_10, img_fieldmap) # , fieldmap_affine, echo_spacing, unwarp_direction)
 
 
 
