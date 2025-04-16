@@ -31,7 +31,7 @@ class MetricsComputationBase(object):
         raise NotImplementedError()
 
     # Compute the metrics
-    def compute_metrics(self):
+    def compute_metrics(self, report_file: str):
         # Metric placeholders to be computed
         metric_values = {
             'correlation_distorted_mean': [],
@@ -145,6 +145,18 @@ class MetricsComputationBase(object):
             metric_values['ssim_out_mean'].append(ssim_out.mean())
             metric_values['ssim_distorted_median'].append(np.median(ssim_distorted))
             metric_values['ssim_out_median'].append(np.median(ssim_out))
+
+        with open(report_file, "w") as f:
+            f.write("\n\nMETRICS REPORT\n\n")
+            for metric_name, values in metric_values.items():
+                line=f"{metric_name}: {values}\n"
+                f.write(line)
+                line=f"Mean {metric_name}: {np.array(values).mean()}\n"
+                f.write(line)
+                line=f"Median: {metric_name}: {np.median(np.array(values))}\n"
+                f.write(line)
+            line = f"Mean compute time per sample in seconds: {np.mean(np.array(self.inference_compute_times))}\n"
+            f.write(line)
 
         print('\n\nMETRICS REPORT\n')
         for metric_name, values in metric_values.items():

@@ -126,7 +126,7 @@ class UNet3DFieldmap(pl.LightningModule):
             workflow.run()
 
             # Load the undistorted file from the temporary directory
-            out = nib.load(os.path.join(directory, 'b0_u.nii.gz')).get_fdata()
+            out = nib.load(os.path.join(directory, 'b0_u.nii.gz')).get_fdata
 
         # Return the undistorted file
         return out
