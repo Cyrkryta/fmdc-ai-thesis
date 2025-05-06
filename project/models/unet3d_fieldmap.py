@@ -15,6 +15,12 @@ from nipype.interfaces import fsl
 from nipype import SelectFiles, Node, Function, Workflow
 import nibabel as nib
 
+from torchmetrics.functional import structural_similarity_index_measure as ssim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from monai.losses import SSIMLoss
+import subprocess
+
+
 """
 Function for getting the median timeframe
 """
@@ -37,104 +43,76 @@ class UNet3DFieldmap(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.model = UNet3D_2Module(2, 1)
+        # self.ssim_weight = 0.1
 
     # Forward layer of the mode
     def forward(self, img):
-        # print("\nForward\n")
         return self.model(img)
 
     # Training step
     def training_step(self, batch, batch_idx):
-        # print("\nTraining step\n")
-        # Retrieve the img and batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
-
-        # Compute fieldmap
         out = self(img_data)
-
-        # Compute the training loss
         train_loss = self.compute_loss(out, fieldmap)
-
-        # Log the loss
         self.log("train_loss", train_loss, on_step=False, on_epoch=True)
-
-        # Return the loss
         return train_loss
 
 
     # Validation step
     def validation_step(self, batch, batch_idx):
-        # print("\nValidation step")
-        # Retrieve elemens from the batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
-        # affine = batch["fieldmap_affine"]
-        # echo_spacing = batch["echo_spacing"]
-        # unwarp_direction = batch["unwarp_direction"]
-        # mask = batch["mask"]
-        # b0_u = batch["b0_u"]
-
-        # Compute the fieldmap estimate
+        mask = batch["mask"]
         out = self(img_data)
-
-        # Compute the loss
         val_loss = self.compute_loss(out, fieldmap)
-
-        # Log the validation loss
         self.log("val_loss", val_loss, on_step=False, on_epoch=True)
-
-        # Log first sample images in each batch to W&B
         if batch_idx == 0:
-            self._log_images(out, img_data, fieldmap)
-            # self._log_images(out, img_data, fieldmap, affine, echo_spacing)
-
-        # Return the loss
+            self._log_images(out, img_data, fieldmap, mask)
         return val_loss
+    
+    def undistort_full_sequence(self, BOLD_4d, T1_4D, affine_b0d, affine_fieldmap, echo_spacing, unwarp_direction, out_path=None):
+        print(f"Preparing data for fieldmap retrieval...")
+        b0_arr = BOLD_4d.cpu().detach().numpy() if torch.is_tensor(BOLD_4d) else BOLD_4d
+        t1_arr = T1_4D.cpu().detach().numpy()   if torch.is_tensor(T1_4D) else T1_4D
+        D, H, W, T = b0_arr.shape
+        mid = T // 2
+        bold_ref = b0_arr[..., mid]   # (D,H,W)
+        t1_ref   = t1_arr[..., mid]   # (D,H,W)
+        inp = np.stack([bold_ref, t1_ref]) # (2, D, H, W)
+        inp_t = torch.from_numpy(inp).unsqueeze(0).float().to(self.device)
+        print(f"Retrieving fieldmap...")
+        with torch.no_grad():
+            fmap_pred = self(inp_t)[0,0].cpu().detach().numpy() # (D, H, W)
+        print(f"Fieldmap retrieved!")
+        b0_for_fugue = np.transpose(b0_arr, (1, 2, 0, 3)) # (H, W, D, T)
+        fmap_for_fugue = np.transpose(fmap_pred, (1, 2, 0)) # (H, W, D)
 
-
-    # Undistort b0
-    def _undistort_b0(self, b0_d, fieldmap, affine_b0d, affine_fieldmap, echo_spacing, unwarp_direction):
-        # Create a temporary directory
-        with tempfile.TemporaryDirectory() as directory:
-            # Move distorted volume to CPU, detach, and convert to a numpy array (repeated 10 times?)
-            b0_d = np.transpose(b0_d.cpu().detach().numpy(), axes=(1, 2, 0))
-            b0_d = np.repeat(b0_d[:, :, :, None], 10, axis=3)
-            # Converting numby array to an nifti image
-            b0_d_image = nib.Nifti1Image(b0_d, affine_b0d)
-            # Save the distorted file
-            nib.save(b0_d_image, os.path.join(directory, 'b0_d.nii.gz'))
-            # Detach the fieldmap, convert to numpy (only the first)
-            fieldmap = fieldmap.cpu().detach().numpy()[0]
-            # Transpose and save the fieldmap image
-            fieldmap = np.transpose(fieldmap, axes=(1, 2, 0))
-            fieldmap_image = nib.Nifti1Image(fieldmap, affine_fieldmap)
-            nib.save(fieldmap_image, os.path.join(directory, 'field_map.nii.gz'))
-
-            # Create necessary nodes for undistortion.
-            in_b0d = Node(SelectFiles({"out_file": abspath(os.path.join(directory, 'b0_d.nii.gz'))}), name="in_b0d")
-            in_fieldmap = Node(SelectFiles({"out_file": abspath(os.path.join(directory, 'field_map.nii.gz'))}), name="in_fieldmap")
-            out_b0_u = Node(nio.ExportFile(out_file=abspath(os.path.join(directory, "b0_u.nii.gz")), clobber=True), name="out_b0_u")
-            fugue_correction = Node(fsl.FUGUE(dwell_time=echo_spacing, smooth3d=3, unwarp_direction=unwarp_direction), name="fugue_correction")
-
-
-            # Perform the fugue correction
-            workflow = Workflow(name="undistort_subject")
-            workflow.connect(in_b0d, "out_file", fugue_correction, "in_file")
-            workflow.connect(in_fieldmap, "out_file", fugue_correction, "fmap_in_file")
-            workflow.connect(fugue_correction, "unwarped_file", out_b0_u, "in_file")
-            workflow.run()
-
-            # Load the undistorted file from the temporary directory
-            out = nib.load(os.path.join(directory, 'b0_u.nii.gz')).get_fdata
-
-        # Return the undistorted file
-        return out
+        print(f"Creating temporary folder...")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            b0_path   = os.path.join(tmpdir, 'BOLD_4d.nii.gz')
+            fmap_path = os.path.join(tmpdir, 'fmap_pred.nii.gz')
+            nib.save(nib.Nifti1Image(b0_for_fugue, affine_b0d[0]),    b0_path)
+            nib.save(nib.Nifti1Image(fmap_for_fugue, affine_b0d[0]),  fmap_path)
+            if out_path is None:
+                out_path = os.path.join(tmpdir, 'BOLD_undistorted.nii.gz')
+            print(f"Running FUGUE....")
+            cmd = [
+                'fugue',
+                '-i', b0_path,
+                f'--loadfmap={fmap_path}',
+                f'--dwell={echo_spacing}',
+                '--smooth3=3',
+                f'--unwarpdir={unwarp_direction}',
+                '-u', out_path
+            ]
+            subprocess.run(cmd, check=True)
+            und = nib.load(out_path).get_fdata() # (H, W, D, T)
+            print(f"Returning undistorted 4D BOLD of shape: {und.shape}")
+            return und
 
     # Logging images
-    # def _log_images(self, out, img, b0_u, mask, fieldmap, affine, echo_spacing):
-    # def _log_images(self, out, img, fieldmap, affine, echo_spacing):
-    def _log_images(self, out, img, fieldmap):
+    def _log_images(self, out, img, fieldmap, mask):
         # Pick a smple and slice
         sample_idx = 0
         slice_idx = img[sample_idx].shape[1] // 2
@@ -142,32 +120,28 @@ class UNet3DFieldmap(pl.LightningModule):
         # Retriieve the sampled images
         t1 = img[sample_idx][1][slice_idx]
         b0_d = img[sample_idx][0][slice_idx]
-        # b0_u = b0_u[sample_idx][0][slice_idx]
         fieldmap = fieldmap[sample_idx][0][slice_idx]
-        # affine = affine[sample_idx]
-        # echo_spacing = echo_spacing[sample_idx]
+        mask = mask[sample_idx][0][slice_idx]
 
         # Log the sample images to wandb
         wandb.log({
             'epoch': self.current_epoch,
             't1': wandb.Image(t1, caption="T1w"),
             'b0_d': wandb.Image(b0_d, caption="B0 Distorted"),
-            # 'b0_u': wandb.Image(b0_u, caption="Ground Truth (B0 Undistorted)"),
             'fieldmap': wandb.Image(fieldmap, caption="Ground Truth Fieldmap"),
-            'out': wandb.Image(out[sample_idx][0][slice_idx], caption="Model Output Fieldmap")
+            'out': wandb.Image(out[sample_idx][0][slice_idx], caption="Model Output Fieldmap"),
+            'mask': wandb.Image(mask, caption="B0 Mask")
         })
 
     # Function for defining and computing the loss function
-    def compute_loss(self, out, fieldmap):
-        # print("\nCompute loss\n")
-        computed_loss = F.mse_loss(out, fieldmap)
-        return computed_loss
+    def compute_loss(self, out, fieldmap, mask=None):
+        loss = F.mse_loss(out, fieldmap)
+        return loss
 
-    # Configuration of the optimizer
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=1e-4, betas=(0.9, 0.999), weight_decay=1e-5)
         return optimizer
-
+    
 
 """
 Class:
@@ -192,49 +166,6 @@ class conv3D_block(nn.Module):
     def forward(self, x):
         x = self.conv3D(x)
         return x
-
-# """
-# Class:
-# Definition of 3D up-convolutional block
-# """
-# class conv3D_block(nn.Module):
-
-#     def __init__(self, in_ch, out_ch):
-
-#         super(conv3D_block, self).__init__()
-
-#         self.conv3D = nn.Sequential(
-#             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
-#             nn.InstanceNorm3d(out_ch),
-#             nn.ReLU(inplace=True),
-#             nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
-#             nn.InstanceNorm3d(out_ch),
-#             nn.ReLU(inplace=True)
-#         )
-
-#     def forward(self, x):
-#         x = self.conv3D(x)
-#         return x
-
-# class up_conv3D_block(nn.Module):
-
-#     def __init__(self, in_ch, out_ch, scale_tuple):
-
-#         super(up_conv3D_block, self).__init__()
-
-#         self.up_conv3D = nn.Sequential(
-#             nn.Upsample(scale_factor=scale_tuple, mode='trilinear'),
-#             nn.Conv3d(in_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
-#             nn.InstanceNorm3d(out_ch),
-#             nn.ReLU(inplace=True), # increasing the depth by adding one below
-#             nn.Conv3d(out_ch, out_ch, kernel_size=3, stride=1, padding=1), # no change in dimensions of 3D volume
-#             nn.InstanceNorm3d(out_ch),
-#             nn.ReLU(inplace=True)
-#         )
-
-#     def forward(self, x):
-#         x = self.up_conv3D(x)
-#         return x
 
 class up_conv3D_block(nn.Module):
 
@@ -294,8 +225,6 @@ class UNet3D_2Module(nn.Module):
 
 
     def forward(self, e_SA):
-        # PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-        # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "caching_allocator"
         # SA network's encoder
         e_SA_1 = self.Conv3D_1(e_SA)
         # print("E1:", e_SA_1.shape)
@@ -333,35 +262,28 @@ class UNet3D_2Module(nn.Module):
         del (e_SA)
 
         # SA network's decoder
-        # d_SA = self.up_Conv3D_1(e_SA_6)
         d_SA = self.up_Conv3D_1(e_SA_6, e_SA_5.shape[2:])
-        # print("D1:", d_SA.shape)
 
         d_SA = torch.cat([e_SA_5, d_SA], dim=1)
         # print("D2:", d_SA.shape)
 
-        # d_SA = self.up_Conv3D_2(d_SA)
         d_SA = self.up_Conv3D_2(d_SA, e_SA_4.shape[2:])
         # print("D3:", d_SA.shape)
         
         d_SA = torch.cat([e_SA_4, d_SA], dim=1)
         # print("D4:", d_SA.shape)
         
-        # d_SA = self.up_Conv3D_3(d_SA)
         d_SA = self.up_Conv3D_3(d_SA, e_SA_3.shape[2:])
         # print("D5:", d_SA.shape)
         
         d_SA = torch.cat([e_SA_3, d_SA], dim=1)
         # print("D6:", d_SA.shape)
         
-        # d_SA = self.up_Conv3D_4(d_SA)
         d_SA = self.up_Conv3D_4(d_SA, e_SA_2.shape[2:])
-        # print("D7:", d_SA.shape)
         
         d_SA = torch.cat([e_SA_2, d_SA], dim=1)
         # print("D8:", d_SA.shape)
         
-        # d_SA = self.up_Conv3D_5(d_SA)
         d_SA = self.up_Conv3D_5(d_SA, e_SA_1.shape[2:])
         # print("D9:", d_SA.shape)
         
@@ -372,7 +294,5 @@ class UNet3D_2Module(nn.Module):
         # print("D11:", d_SA.shape)
 
         del (e_SA_1, e_SA_2, e_SA_3, e_SA_4, e_SA_5)
-    
-        # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = ""
 
         return d_SA

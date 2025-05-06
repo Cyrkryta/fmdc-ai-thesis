@@ -49,12 +49,14 @@ class UNet3DFieldmap(pl.LightningModule):
         # Retrieve the img and batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
+        mask = batch["mask"]
 
         # Compute fieldmap
         out = self(img_data)
 
         # Compute the training loss
-        train_loss = self.compute_loss(out, fieldmap)
+        # train_loss = self.compute_loss(out, fieldmap)
+        train_loss = self.compute_loss(out, fieldmap, mask)
 
         # Log the loss
         self.log("train_loss", train_loss, on_step=False, on_epoch=True)
@@ -69,19 +71,20 @@ class UNet3DFieldmap(pl.LightningModule):
         # Retrieve elemens from the batch
         img_data = batch["img_data"]
         fieldmap = batch["fieldmap"]
+        mask = batch["mask"]
 
         # Compute the fieldmap estimate
         out = self(img_data)
 
         # Compute the loss
-        val_loss = self.compute_loss(out, fieldmap)
+        val_loss = self.compute_loss(out, fieldmap, mask)
 
         # Log the validation loss
         self.log("val_loss", val_loss, on_step=False, on_epoch=True)
 
         # Log first sample images in each batch to W&B
         if batch_idx == 0:
-            self._log_images(out, img_data, fieldmap)
+            self._log_images(out, img_data, fieldmap, mask)
             # self._log_images(out, img_data, fieldmap, affine, echo_spacing)
 
         # Return the loss
@@ -129,7 +132,7 @@ class UNet3DFieldmap(pl.LightningModule):
     # Logging images
     # def _log_images(self, out, img, b0_u, mask, fieldmap, affine, echo_spacing):
     # def _log_images(self, out, img, fieldmap, affine, echo_spacing):
-    def _log_images(self, out, img, fieldmap):
+    def _log_images(self, out, img, fieldmap, mask):
         # Pick a smple and slice
         sample_idx = 0
         slice_idx = img[sample_idx].shape[1] // 2
@@ -139,6 +142,7 @@ class UNet3DFieldmap(pl.LightningModule):
         b0_d = img[sample_idx][0][slice_idx]
         # b0_u = b0_u[sample_idx][0][slice_idx]
         fieldmap = fieldmap[sample_idx][0][slice_idx]
+        mask = mask[sample_idx][0][slice_idx]
         # affine = affine[sample_idx]
         # echo_spacing = echo_spacing[sample_idx]
 
@@ -149,13 +153,14 @@ class UNet3DFieldmap(pl.LightningModule):
             'b0_d': wandb.Image(b0_d, caption="B0 Distorted"),
             # 'b0_u': wandb.Image(b0_u, caption="Ground Truth (B0 Undistorted)"),
             'fieldmap': wandb.Image(fieldmap, caption="Ground Truth Fieldmap"),
-            'out': wandb.Image(out[sample_idx][0][slice_idx], caption="Model Output Fieldmap")
+            'out': wandb.Image(out[sample_idx][0][slice_idx], caption="Model Output Fieldmap"),
+            "mask": wandb.Image(mask, caption="T1w Mask")
         })
 
     # Function for defining and computing the loss function
-    def compute_loss(self, out, fieldmap):
+    def compute_loss(self, out, fieldmap, mask):
         # print("\nCompute loss\n")
-        computed_loss = F.mse_loss(out, fieldmap)
+        computed_loss = F.mse_loss(out * mask, fieldmap * mask)
         return computed_loss
 
     # Configuration of the optimizer

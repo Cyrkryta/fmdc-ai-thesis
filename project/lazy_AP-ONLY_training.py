@@ -19,6 +19,7 @@ from project.data.lazy_fmri_dataset import LazyFMRIDataset
 from project.data.custom_fmri_sampler import FMRICustomSampler, get_project_key
 from metrics.metrics import TemporalCorrelation
 from models.unet3d_fieldmap import UNet3DFieldmap
+# from models.unet3d_fieldmap_crop import UNet3DFieldmap
 import json
 
 
@@ -44,8 +45,8 @@ if __name__ == '__main__':
         device = "cuda"
     print(f"Running on {device}")
 
-    train_paths_json = "/indirect/student/magnuschristensen/dev/fmdc/data-paths/train_paths_AP.json"
-    val_paths_json = "/indirect/student/magnuschristensen/dev/fmdc/data-paths/val_paths_AP.json"
+    train_paths_json = "/indirect/student/magnuschristensen/dev/fmdc/data-paths/training/train_paths_AP.json"
+    val_paths_json = "/indirect/student/magnuschristensen/dev/fmdc/data-paths/training/val_paths_AP.json"
 
     # Load the json files for test
     with open(train_paths_json, "r") as f:
@@ -57,11 +58,15 @@ if __name__ == '__main__':
     TRAIN_PATHS = train_json["train_paths"]
     VAL_PATHS = val_json["val_paths"]
 
+    print(f"# Number of TRAIN samples: {len(TRAIN_PATHS)}")
+    print(f"# Number of VAL samples: {len(VAL_PATHS)}")
+
     # Setting up the model parameters
     wandb_run = wandb.init(project="field-map-ai", reinit=True)
     wandb_logger = WandbLogger(project="field-map-ai", id=wandb_run.id, log_model=True)
     checkpoint_prefix = f"{wandb_run.id}_model_AP-ONLY_"
-    every_n_epochs = 10
+    # every_n_epochs = 10
+    every_n_epochs = 1
     val_every_n_epoch = 1
     log_every_n_steps = 50
     print(f"\nUpdating model every {every_n_epochs} epochs")
@@ -75,8 +80,7 @@ if __name__ == '__main__':
         filename = checkpoint_prefix + "unet3d_{epoch:02d}_{val_loss:.5f}",
         every_n_epochs = every_n_epochs,
         save_top_k = 1,
-        monitor = "val_loss",
-        save_last=True
+        monitor = "val_loss"
     )
     print("Checkpoint callback set up\n")
 
@@ -103,7 +107,7 @@ if __name__ == '__main__':
     print("Creating training dataset....")
     train_dataset = LazyFMRIDataset(TRAIN_PATHS, device=device, mode="train")
     train_sampler = FMRICustomSampler(train_dataset, batch_size=args.batch_size, key_fn=get_project_key)
-    train_dataloader = DataLoader(train_dataset, batch_sampler=train_sampler, num_workers=2, persistent_workers=True)
+    train_dataloader = DataLoader(train_dataset, batch_sampler=train_sampler, num_workers=2, persistent_workers=True, pin_memory=True)
     print("Training dataset created\n")
 
     print("Creating validation dataset...")

@@ -35,14 +35,11 @@ class FieldmapsModelMetricsComputation(MetricsComputationBase):
     
     # Fieldmap prediction
     def _predict_fieldmap(self, bold_ref, t1_ref):
-        # bold_d_trans = np.transpose(bold_ref, (2, 0, 1))
-        # t1_trans = np.transpose(t1_ref, (2, 0, 1))
         print(f"Input dimensions: {bold_ref.shape}, {t1_ref.shape}")
         input_img = np.stack((bold_ref, t1_ref))
         print(f"Input image shape: {input_img.shape}")
         input_tensor = torch.from_numpy(input_img).unsqueeze(0).float().to(self.device)
         print(f"Input tensor of type: {type(input_tensor)}")
-        # pred = self.model(input_tensor)[0].detach().numpy()
         with torch.no_grad():
             pred = self.model(input_tensor)[0].detach().cpu().numpy()
         print(f"Pred type: {type(pred)}, dimension: {pred.shape}")
@@ -50,13 +47,6 @@ class FieldmapsModelMetricsComputation(MetricsComputationBase):
         fieldmap_nifti = np.transpose(fieldmap_pred, (1, 2, 0))
         print(f"Final fieldmap shape: {fieldmap_nifti.shape}")
         return fieldmap_nifti
-        # input_img = np.stack((bold_d_trans, t1_trans))
-        # input_tensor = torch.from_numpy(input_img).unsqueeze(0).float().to(self.device)
-        # with torch.no_grad():
-        #     pred = self.model(input_tensor)[0].cpu().numpy()
-        # fiieldmap_pred = pred[0]
-        # fieldmap_nifti = np.transpose(fiieldmap_pred, (1, 2, 0))
-        # return fieldmap_nifti
 
     # FUGUE undistortion
     def _apply_fugue_undistortion(self, bold_4d, pred_fieldmap, affine, echo_spacing, unwarp_direction, out_path):
@@ -83,8 +73,43 @@ class FieldmapsModelMetricsComputation(MetricsComputationBase):
             
     # Load the input samples
     def load_input_samples(self, subject_path):
+        print(f"Loading inputs samples for subject...")
         # Load all subject data for testing
         (t1w, b0d, b0u, b0_mask, fieldmap, b0d_affine, fieldmap_affine, echospacing, phaseencodingdirection) = fmri_data_util.load_data_from_path_for_test(subject_path=subject_path)
+        print(f"Retrieved samples of the following shapes:")
+        print(f"T1w shape: {t1w.shape}")
+        print(f"b0d shape: {b0d.shape}")
+        print(f"b0u shape: {b0u.shape}")
+        print(f"mask shape: {b0_mask.shape}")
+    
+        print(f"Transposing input for the ")
+        bold_4d = np.transpose(b0d, (1, 2, 3, 0))
+        t1_4d = np.transpose(t1w, (1, 2, 3, 0))
+        print(f"BOLD 4D shape after transpose: {bold_4d.shape}")
+        print(f"T1 4D shape after transpose: {t1_4d.shape}\n")
+
+        print(f"Undistorting BOLD with fugue...")
+        start_time = time.time()
+        undistorted_4d = self.model.undistort_full_sequence(bold_4d, t1_4d, b0d_affine, b0d_affine, echospacing, phaseencodingdirection, out_path=os.path.join(subject_path, 'b0_fugue_u.nii.gz'))
+        end_time = time.time()
+        print(f"Undistortion completed...")
+        elapsed_time = end_time - start_time
+        self.undistortion_compute_times.append(elapsed_time)
+
+        print(f"Creating samples (Loading time points)....")
+        time_series = []
+        num_tp = undistorted_4d.shape[3]
+        for t in range(num_tp):
+            sample = {
+                "b0d": np.transpose(list(b0d)[t], axes=(1,2,0)),
+                "b0u": np.transpose(list(b0u)[t].squeeze(0), axes=(1,2,0)),
+                "out": undistorted_4d[..., t],
+                "mask": np.transpose(list(b0_mask)[t].squeeze(0), axes=(1,2,0))
+            }
+            time_series.append(sample)
+        print(f"Samples loaded")
+        return time_series
+
         # print(f"Original t1 shape: {t1w.shape}")
         # print(f"BOLD d original shape: {b0d.shape}")
         bold_4d = np.transpose(b0d, (1, 2, 3, 0))
@@ -143,10 +168,6 @@ class FieldmapsModelMetricsComputation(MetricsComputationBase):
             img_b0u = list(b0u)[t]
             img_out = unwarped_4d[..., t]
             img_mask = list(b0_mask)[t]
-            # print(f"b0d shape: {img_b0d.shape}")
-            # print(f"b0u shape: {img_b0u.shape}")
-            # print(f"out shape: {img_out.shape}")
-            # print(f"mask shape: {img_mask.shape}")
 
             sample = {
                 "b0d": np.transpose(img_b0d, axes=(1, 2, 0)),
@@ -166,11 +187,21 @@ class FieldmapsModelMetricsComputation(MetricsComputationBase):
     
     def save_compute_times(self, save_path):
         with open(save_path, "w") as f:
-            f.write("Fieldmap Prediction Times (seconds):\n")
-            f.write(", ".join([f"{t:.3f}" for t in self.fieldmap_compute_times]) + "\n")
-            f.write("Total Compute Times (seconds): \n")
-            f.write(", ".join([f"{t:.3f}" for t in self.undistortion_compute_times]) + "\n")
+            f.write("Undistortion Times (seconds):")
+            if self.undistortion_compute_times:
+                f.write(", ".join(f"{t:.3f}" for t in self.undistortion_compute_times) + "")
+            else:
+                f.write("No undistortion time recorded...")
         print(f"Compute times saved to {save_path}")
+
+    
+    # def save_compute_times(self, save_path):
+    #     with open(save_path, "w") as f:
+    #         f.write("Fieldmap Prediction Times (seconds):\n")
+    #         f.write(", ".join([f"{t:.3f}" for t in self.fieldmap_compute_times]) + "\n")
+    #         f.write("Total Compute Times (seconds): \n")
+    #         f.write(", ".join([f"{t:.3f}" for t in self.undistortion_compute_times]) + "\n")
+    #     print(f"Compute times saved to {save_path}")
         
 
 

@@ -108,18 +108,22 @@ def load_data_from_path_for_train(subject_path, use_cache=True, use_saved_nifti=
     cached_T1 = os.path.join(cached_dir, "processed_T1w.nii.gz")
     cached_b0 = os.path.join(cached_dir, "processed_b0_d_10.nii.gz")
     cached_fieldmap = os.path.join(cached_dir, "processed_fieldmap.nii.gz")
+    cached_mask = os.path.join(subject_path, "b0_mask.nii.gz")
 
     if use_saved_nifti and os.path.exists(cached_T1) and os.path.exists(cached_b0) and os.path.exists(cached_fieldmap):
         # print(f"Loading preprocessed NIFTI files for subject: {subject_path}")
         img_t1 = nib.load(cached_T1).get_fdata()
         img_b0_d_10 = nib.load(cached_b0).get_fdata()
         img_fieldmap = nib.load(cached_fieldmap).get_fdata()
-
+        img_mask = nib.load(cached_mask).get_fdata()
+        img_mask = data_util.niimask2torch(img_mask, repetitions=10) != 0
+        img_mask = np.array(img_mask, dtype=np.uint8)
         # img_t1 = torch.from_numpy(img_t1)
         # img_b0_d_10 = torch.from_numpy(img_b0_d_10)
         # img_fieldmap = torch.from_numpy(img_fieldmap)
 
-        return (img_t1, img_b0_d_10, img_fieldmap)
+        # return (img_t1, img_b0_d_10, img_fieldmap)
+        return (img_t1, img_b0_d_10, img_fieldmap, img_mask)
     
     # print(f"Cached NIFTI files not found for subject: {subject_path}. Processing raw data...")
 
