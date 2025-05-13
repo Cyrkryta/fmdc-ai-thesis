@@ -141,3 +141,6 @@ scripts/OUTPUTS/
 
 # Undistort subject
 undistort_subject/
+
+# License file
+scripts/baseline-files/license.txt

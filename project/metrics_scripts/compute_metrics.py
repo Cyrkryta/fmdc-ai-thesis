@@ -41,31 +41,31 @@ def main():
             device=args.device
         )
         report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/fieldmap"
-        report_file = os.path.join(report_root, "fieldmap_test_m0.txt")
-        times_file = os.path.join(report_root, "fieldmap_times_test_m0.txt")
+        report_file = os.path.join(report_root, "NEW_fieldmap_v2.txt")
+        times_file = os.path.join(report_root, "NEW_fieldmap_times_v2.txt")
         metrics_comp.compute_metrics(report_file=report_file)
         metrics_comp.save_compute_times(save_path=times_file)
 
     # Test suite for the kfcv case
     elif args.model=="kfcv":
         # report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv/PA"
+        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv/AP"
         model_root = "/indirect/student/magnuschristensen/dev/fmdc/downloads/kfcv-ckpt-AP"
         print(f"Report root: {report_root}")
         models = [
-            "mkilsf32_model0_unet3d_epoch=147_val_loss=1399.99133.ckpt",
-            "sc2avov0_model1_unet3d_epoch=209_val_loss=1305.05005.ckpt",
-            "rfotmw47_model2_unet3d_epoch=234_val_loss=1317.46313.ckpt",
-            "18dr2qm4_model3_unet3d_epoch=172_val_loss=1334.92322.ckpt",
-            "t1z5jqsm_model4_unet3d_epoch=159_val_loss=1650.42480.ckpt",
-            "ozsqm0hm_model5_unet3d_epoch=190_val_loss=1318.22595.ckpt",
-            "hsgrha8b_model6_unet3d_epoch=198_val_loss=1163.12549.ckpt",
-            "bnn21ltx_model7_unet3d_epoch=191_val_loss=1307.36890.ckpt",
-            "844vqvn2_model8_unet3d_epoch=225_val_loss=1432.07471.ckpt",
-            "zne5b47m_model9_unet3d_epoch=195_val_loss=1117.42761.ckpt"
+            "pt8df2wq_model0_unet3d_epoch=168_val_loss=1260.82800.ckpt",
+            "gspv4x2y_model1_unet3d_epoch=205_val_loss=1498.90869.ckpt",
+            "52egy5h6_model2_unet3d_epoch=214_val_loss=1596.77698.ckpt",
+            "bo6i25gl_model3_unet3d_epoch=208_val_loss=1799.74060.ckpt",
+            "kj2jxx68_model4_unet3d_epoch=212_val_loss=1839.65894.ckpt",
+            "50gymhtl_model5_unet3d_epoch=180_val_loss=1501.38831.ckpt",
+            "fdys9i4a_model6_unet3d_epoch=195_val_loss=1226.33411.ckpt",
+            "kmj1hh3e_model7_unet3d_epoch=178_val_loss=1611.60132.ckpt",
+            "vvut9gzm_model8_unet3d_epoch=240_val_loss=1327.89038.ckpt",
+            "yqn0wlbn_model9_unet3d_epoch=182_val_loss=1349.57983.ckpt"
         ]
 
-        for idx, model in enumerate(models, start=1):
+        for idx, model in enumerate(models):
             print(f"At idx {idx}, Model: {model}\n")
             full_model_path = os.path.join(model_root, model)
             kfcv_report_file = os.path.join(report_root, f"model{idx}_metrics_report.txt")

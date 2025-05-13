@@ -47,7 +47,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Print the provided variables
- 
     print(f"Max epochs: {args.max_epochs}")
     print(f"Batch Size: {args.batch_size}")
 

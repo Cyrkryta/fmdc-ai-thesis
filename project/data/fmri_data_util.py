@@ -159,14 +159,6 @@ def load_data_from_path_for_train(subject_path, use_cache=True, use_saved_nifti=
     min_img_b0_d = 0
     img_b0_d_10 = data_util.normalize_img(img_b0_d_10, max_img_b0_d, min_img_b0_d, 1, -1)
 
-    # # Retrieving affines
-    # fieldmap_affine = nib.load(fieldmap_path).affine
-    # fieldmap_affine = np.repeat(fieldmap_affine[None, :], number_timesteps, axis=0)
-    # echo_spacing = np.array(dataset_meta['echospacing'])
-    # echo_spacing = np.repeat(echo_spacing, number_timesteps, axis=0)
-    # unwarp_direction = dataset_meta["phaseencodingdirection"]
-    # unwarp_direction = np.array([unwarp_direction] * number_timesteps)
-
     # Caching the data
     os.makedirs(cached_dir, exist_ok=True)
     t1_nii = nib.Nifti1Image(img_t1, nib.load(t1_path).affine)
@@ -176,9 +168,13 @@ def load_data_from_path_for_train(subject_path, use_cache=True, use_saved_nifti=
     nib.save(b0_nii, cached_b0)
     nib.save(fieldmap_nii, cached_fieldmap)
 
-    print(f"Processed NIFTI files aved for subject: {subject_path} in {cached_dir}!")
+    img_mask = nib.load(cached_mask).get_fdata()
+    img_mask = data_util.niimask2torch(img_mask, repetitions=number_timesteps) != 0
+    img_mask = np.array(img_mask, dtype=np.uint8)
 
-    return (img_t1, img_b0_d_10, img_fieldmap)
+    print(f"Processed NIFTI files saved for subject: {subject_path} in {cached_dir}!")
+
+    return (img_t1, img_b0_d_10, img_fieldmap, img_mask)
 
 # def load_data_from_path_for_train(subject_path):
 #     # Collect paths
