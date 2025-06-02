@@ -32,11 +32,11 @@ The model is trained on publically available data retrieved from OpenNeuro
 
 ## Docker
 
-The best performing model is packed in a Docker image which can be pulled from https://hub.docker.com/r/maglindchr/fmapsynth by runnining by running `docker pull maglindchr/fmapsynth:v1.0`. 
+The best performing model is packed in a Docker image which can be pulled from https://hub.docker.com/r/maglindchr/fmapsynth
 
-The model itself, and two example images can be retrieved [here](https://drive.google.com/drive/folders/1V2RDDLP2VzG8n5O6mMlezzlZXzB1QnT5?usp=drive_link)
+The model itself, and two example images can be retrieved [here](https://drive.google.com/drive/folders/1V2RDDLP2VzG8n5O6mMlezzlZXzB1QnT5?usp=drive_link) by running `docker pull maglindchr/fmapsynth:v1.0`. 
 
-The model's performance on the example images has not been examined. 
+The model's performance on the example images has not been examined, and the model will only be available in the time that storage allows it.
 
 The image performs a simple set of preprocessing steps (motion correction, coregistration, etc.), and have already the necessary tools installed.
 
@@ -54,10 +54,50 @@ maglindchr/fmapsynth:v1.0
 ```
 
 
+## Training
+
+The model is currently trained on an `NVIDIA QUADRO P6000` at a batch size of 8. When running a 10-fold cross validation of the model this took an average of 9.5 hours before convergence.
+
+If for any reason one would want to train a new model, this can be done my running either the `project/lazy_training.py` file for a single run. 
+
+The file references two local paths in the file (should later be arguments) which points to the subject paths that should be retrieved for training and validation, respectively. These files should be structured as
+
+```
+e.g. train_paths.json
+
+{
+    "train_paths": [
+        "path/to/sub-01",
+        "path/to/sub-02",
+        ...
+        "path to sub-X"
+    ]
+}
+
+e.g. val_paths.json
+{
+    "val_paths": [
+        "path/to/sub-01",
+        "path/to/sub-02",
+        ...
+        "path to sub-X"
+    ]
+}
+```
+
+After changing the paths in the file (or creating arguments for it), the training can be run using the following command
+
+```shell
+nice python project/lazy_training.py \
+--checkpoint_path path/to/directory/for/storing/checkpoints \
+--max_epochs e.g. 15000 \
+--batch_size e.g. 8/16/32
+```
+
 ## Authors
 
 - [@Cyrkryta (Magnus Lindberg Christensen)](https://github.com/Cyrkryta/)
 
 
 ## Acknowledgements
-A big thank you to Melanie Ganz-Benjaminsen from the University of Copenhagen, as well as Patrick Fisher and Cyril Pernet from NRU, for being great supervisors throughout the project.
+A big thank you to Melanie Ganz-Benjaminsen from the University of Copenhagen, as well as Patrick Fisher and Cyril Pernet from NRU, for being great supervisors throughout the project. Also, a big thank you to Jan Tagscherer who is the initial Master student wokring on the project, affiliated with NRU.
