@@ -7,7 +7,6 @@ def get_project_key(dataset, idx):
     """
     Custom function for retrieving a designated project key
     """
-    # return dataset.project_keys[idx]
     _, _, project = dataset.index_mapping[idx]
     return project
 

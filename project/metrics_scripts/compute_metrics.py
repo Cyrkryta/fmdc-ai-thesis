@@ -20,7 +20,7 @@ def main():
     parser.add_argument("--CHECKPOINT_PATH", help="Path to the model checkpoint.")
     parser.add_argument("--TEST_JSON_PATH", required=True, help="Path to the JSON file containing test paths.")
     parser.add_argument("--device", default="cpu", help="Device to run evaluation on (e.g., 'cpu' or 'cuda').")
-    parser.add_argument("--model", choices=["fieldmap", "mean-fieldmaps", "kfcv", "kfcv-2", "synbold", "synb0", "kfcv-m0", "kfcv-m1", "kfcv-m2", "kfcv-m3", "kfcv-m4", "kfcv-m5", "kfcv-m6", "kfcv-m7", "kfcv-m8", "kfcv-m9"], default="fieldmap", help="Which model to run the evaluation on")
+    parser.add_argument("--model", choices=["fieldmap", "philips", "mean-fieldmaps", "kfcv", "kfcv-2", "kfcv-3", "synbold", "synb0", "kfcv-m0", "kfcv-m1", "kfcv-m2", "kfcv-m3", "kfcv-m4", "kfcv-m5", "kfcv-m6", "kfcv-m7", "kfcv-m8", "kfcv-m9"], default="fieldmap", help="Which model to run the evaluation on")
     args = parser.parse_args()
     # CHECKPOINT_PATH = args.CHECKPOINT_PATH
     # TEST_JSON_PATH = args.TEST_JSON_PATH
@@ -40,9 +40,10 @@ def main():
             TEST_PATHS=TEST_PATHS,
             device=args.device
         )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/fieldmap"
-        report_file = os.path.join(report_root, "NEW_fieldmap_v2.txt")
-        times_file = os.path.join(report_root, "NEW_fieldmap_times_v2.txt")
+        # report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/fieldmap"
+        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/philips"
+        report_file = os.path.join(report_root, "philips_median_metrics.txt")
+        times_file = os.path.join(report_root, "philips_median_times.txt")
         metrics_comp.compute_metrics(report_file=report_file)
         metrics_comp.save_compute_times(save_path=times_file)
 
@@ -82,23 +83,86 @@ def main():
     # Test suite for the kfcv case
     elif args.model=="kfcv-2":
         # report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv/PA"
+        model_root = "/indirect/student/magnuschristensen/dev/fmdc/downloads/kfcv-ckpt-AP"
+        print(f"Report root: {report_root}")
+        models = [
+            "pt8df2wq_model0_unet3d_epoch=168_val_loss=1260.82800.ckpt",
+            "gspv4x2y_model1_unet3d_epoch=205_val_loss=1498.90869.ckpt",
+            "52egy5h6_model2_unet3d_epoch=214_val_loss=1596.77698.ckpt",
+            "bo6i25gl_model3_unet3d_epoch=208_val_loss=1799.74060.ckpt",
+            "kj2jxx68_model4_unet3d_epoch=212_val_loss=1839.65894.ckpt",
+            "50gymhtl_model5_unet3d_epoch=180_val_loss=1501.38831.ckpt",
+            "fdys9i4a_model6_unet3d_epoch=195_val_loss=1226.33411.ckpt",
+            "kmj1hh3e_model7_unet3d_epoch=178_val_loss=1611.60132.ckpt",
+            "vvut9gzm_model8_unet3d_epoch=240_val_loss=1327.89038.ckpt",
+            "yqn0wlbn_model9_unet3d_epoch=182_val_loss=1349.57983.ckpt"
+        ]
+
+        for idx, model in enumerate(models):
+            print(f"At idx {idx}, Model: {model}\n")
+            full_model_path = os.path.join(model_root, model)
+            kfcv_report_file = os.path.join(report_root, f"model{idx}_metrics_report.txt")
+            kfcv_times_file = os.path.join(report_root, f"model{idx}_compute_times.txt")
+            metrics_comp = FieldmapsModelMetricsComputation(
+                CHECKPOINT_PATH=full_model_path,
+                TEST_PATHS=TEST_PATHS,
+                device=args.device
+            )
+            metrics_comp.compute_metrics(report_file=kfcv_report_file)
+            metrics_comp.save_compute_times(save_path=kfcv_times_file)
+
+        # Test suite for the kfcv case
+    elif args.model=="kfcv-3":
+        # report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
         report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv/RL"
         model_root = "/indirect/student/magnuschristensen/dev/fmdc/downloads/kfcv-ckpt-AP"
         print(f"Report root: {report_root}")
         models = [
-            "mkilsf32_model0_unet3d_epoch=147_val_loss=1399.99133.ckpt",
-            "sc2avov0_model1_unet3d_epoch=209_val_loss=1305.05005.ckpt",
-            "rfotmw47_model2_unet3d_epoch=234_val_loss=1317.46313.ckpt",
-            "18dr2qm4_model3_unet3d_epoch=172_val_loss=1334.92322.ckpt",
-            "t1z5jqsm_model4_unet3d_epoch=159_val_loss=1650.42480.ckpt",
-            "ozsqm0hm_model5_unet3d_epoch=190_val_loss=1318.22595.ckpt",
-            "hsgrha8b_model6_unet3d_epoch=198_val_loss=1163.12549.ckpt",
-            "bnn21ltx_model7_unet3d_epoch=191_val_loss=1307.36890.ckpt",
-            "844vqvn2_model8_unet3d_epoch=225_val_loss=1432.07471.ckpt",
-            "zne5b47m_model9_unet3d_epoch=195_val_loss=1117.42761.ckpt"
+            "pt8df2wq_model0_unet3d_epoch=168_val_loss=1260.82800.ckpt",
+            "gspv4x2y_model1_unet3d_epoch=205_val_loss=1498.90869.ckpt",
+            "52egy5h6_model2_unet3d_epoch=214_val_loss=1596.77698.ckpt",
+            "bo6i25gl_model3_unet3d_epoch=208_val_loss=1799.74060.ckpt",
+            "kj2jxx68_model4_unet3d_epoch=212_val_loss=1839.65894.ckpt",
+            "50gymhtl_model5_unet3d_epoch=180_val_loss=1501.38831.ckpt",
+            "fdys9i4a_model6_unet3d_epoch=195_val_loss=1226.33411.ckpt",
+            "kmj1hh3e_model7_unet3d_epoch=178_val_loss=1611.60132.ckpt",
+            "vvut9gzm_model8_unet3d_epoch=240_val_loss=1327.89038.ckpt",
+            "yqn0wlbn_model9_unet3d_epoch=182_val_loss=1349.57983.ckpt"
         ]
 
-        for idx, model in enumerate(models, start=1):
+        for idx, model in enumerate(models):
+            print(f"At idx {idx}, Model: {model}\n")
+            full_model_path = os.path.join(model_root, model)
+            kfcv_report_file = os.path.join(report_root, f"model{idx}_metrics_report.txt")
+            kfcv_times_file = os.path.join(report_root, f"model{idx}_compute_times.txt")
+            metrics_comp = FieldmapsModelMetricsComputation(
+                CHECKPOINT_PATH=full_model_path,
+                TEST_PATHS=TEST_PATHS,
+                device=args.device
+            )
+            metrics_comp.compute_metrics(report_file=kfcv_report_file)
+            metrics_comp.save_compute_times(save_path=kfcv_times_file)
+
+    elif args.model=="philips":
+        # report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv/philips"
+        model_root = "/indirect/student/magnuschristensen/dev/fmdc/downloads/kfcv-ckpt-AP"
+        print(f"Report root: {report_root}")
+        models = [
+            "pt8df2wq_model0_unet3d_epoch=168_val_loss=1260.82800.ckpt",
+            "gspv4x2y_model1_unet3d_epoch=205_val_loss=1498.90869.ckpt",
+            "52egy5h6_model2_unet3d_epoch=214_val_loss=1596.77698.ckpt",
+            "bo6i25gl_model3_unet3d_epoch=208_val_loss=1799.74060.ckpt",
+            "kj2jxx68_model4_unet3d_epoch=212_val_loss=1839.65894.ckpt",
+            "50gymhtl_model5_unet3d_epoch=180_val_loss=1501.38831.ckpt",
+            "fdys9i4a_model6_unet3d_epoch=195_val_loss=1226.33411.ckpt",
+            "kmj1hh3e_model7_unet3d_epoch=178_val_loss=1611.60132.ckpt",
+            "vvut9gzm_model8_unet3d_epoch=240_val_loss=1327.89038.ckpt",
+            "yqn0wlbn_model9_unet3d_epoch=182_val_loss=1349.57983.ckpt"
+        ]
+
+        for idx, model in enumerate(models):
             print(f"At idx {idx}, Model: {model}\n")
             full_model_path = os.path.join(model_root, model)
             kfcv_report_file = os.path.join(report_root, f"model{idx}_metrics_report.txt")
@@ -128,8 +192,8 @@ def main():
 
     elif args.model == "mean-fieldmaps":
         report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/mean_fieldmap"
-        mean_fmap_report_file = os.path.join(report_root, "mean_fmap_report_AP.txt")
-        mean_fmap_times_file = os.path.join(report_root, "mean_fmap_times_AP.txt")
+        mean_fmap_report_file = os.path.join(report_root, "mean_fmap_report_philips.txt")
+        mean_fmap_times_file = os.path.join(report_root, "mean_fmap_times_philips.txt")
         metrics_comp = MeanFieldmapsMetricsComputation(
             subject_paths=TEST_PATHS,
             device = args.device
@@ -137,124 +201,125 @@ def main():
         metrics_comp.compute_metrics(report_file=mean_fmap_report_file)
         metrics_comp.save_compute_times(save_path=mean_fmap_times_file)
         pass
-
-    elif args.model == "kfcv-m0":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/6wvvsz8o_model0_unet3d_epoch=139_val_loss=1358.73145.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model0_metrics_report.txt")
-        times_file = os.path.join(report_root, "model0_compute_times.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-        metrics_comp.save_compute_times(save_path=times_file)
-
-    elif args.model == "kfcv-m1":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/j9vd5pfe_model1_unet3d_epoch=139_val_loss=1150.53113.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model1_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-
-    elif args.model == "kfcv-m2":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/qa4714fw_model2_unet3d_epoch=129_val_loss=1155.35828.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model2_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-
-
-    elif args.model == "kfcv-m3":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/z96lsd46_model3_unet3d_epoch=139_val_loss=1245.35901.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model3_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-
-    elif args.model == "kfcv-m4":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/54p2097p_model4_unet3d_epoch=129_val_loss=1330.44702.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model4_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-        # metrics_comp.save_compute_times
-
-    elif args.model == "kfcv-m5":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/goputb7m_model5_unet3d_epoch=129_val_loss=1147.49390.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model5_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-
-    elif args.model == "kfcv-m6":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/81421cn0_model6_unet3d_epoch=119_val_loss=1355.11401.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model6_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-        
-    elif args.model == "kfcv-m7":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/6qud2br2_model7_unet3d_epoch=139_val_loss=1509.06543.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS[:1],
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model7_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-        
-    elif args.model == "kfcv-m8":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/486hlbe0_model8_unet3d_epoch=129_val_loss=1269.33875.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model8_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-
-    elif args.model == "kfcv-m9":
-        model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/ht2ldc2u_model9_unet3d_epoch=129_val_loss=1357.09900.ckpt"
-        metrics_comp = FieldmapsModelMetricsComputation(
-            CHECKPOINT_PATH=model_checkpoint,
-            TEST_PATHS=TEST_PATHS,
-            device=args.device
-        )
-        report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
-        report_file = os.path.join(report_root, "model9_metrics_report.txt")
-        metrics_comp.compute_metrics(report_file=report_file)
-
-    # Graceful error handling
+        # Graceful error handling
     else:
         raise ValueError("Unknown model type provided")
+
+    # elif args.model == "kfcv-m0":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/6wvvsz8o_model0_unet3d_epoch=139_val_loss=1358.73145.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model0_metrics_report.txt")
+    #     times_file = os.path.join(report_root, "model0_compute_times.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+    #     metrics_comp.save_compute_times(save_path=times_file)
+
+    # elif args.model == "kfcv-m1":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/j9vd5pfe_model1_unet3d_epoch=139_val_loss=1150.53113.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model1_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+
+    # elif args.model == "kfcv-m2":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/qa4714fw_model2_unet3d_epoch=129_val_loss=1155.35828.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model2_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+
+
+    # elif args.model == "kfcv-m3":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/z96lsd46_model3_unet3d_epoch=139_val_loss=1245.35901.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model3_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+
+    # elif args.model == "kfcv-m4":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/54p2097p_model4_unet3d_epoch=129_val_loss=1330.44702.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model4_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+    #     # metrics_comp.save_compute_times
+
+    # elif args.model == "kfcv-m5":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/goputb7m_model5_unet3d_epoch=129_val_loss=1147.49390.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model5_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+
+    # elif args.model == "kfcv-m6":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/81421cn0_model6_unet3d_epoch=119_val_loss=1355.11401.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model6_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+        
+    # elif args.model == "kfcv-m7":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/6qud2br2_model7_unet3d_epoch=139_val_loss=1509.06543.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS[:1],
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model7_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+        
+    # elif args.model == "kfcv-m8":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/486hlbe0_model8_unet3d_epoch=129_val_loss=1269.33875.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model8_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+
+    # elif args.model == "kfcv-m9":
+    #     model_checkpoint = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints/ht2ldc2u_model9_unet3d_epoch=129_val_loss=1357.09900.ckpt"
+    #     metrics_comp = FieldmapsModelMetricsComputation(
+    #         CHECKPOINT_PATH=model_checkpoint,
+    #         TEST_PATHS=TEST_PATHS,
+    #         device=args.device
+    #     )
+    #     report_root = "/indirect/student/magnuschristensen/dev/fmdc/fmdc-ai-thesis/reports/kfcv"
+    #     report_file = os.path.join(report_root, "model9_metrics_report.txt")
+    #     metrics_comp.compute_metrics(report_file=report_file)
+
+
     
     
         # root = "/indirect/student/magnuschristensen/dev/fmdc/downloads/k-fold-checkpoints"

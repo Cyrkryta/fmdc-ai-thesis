@@ -1,0 +1,90 @@
+[
+    {
+        "group": 1,
+        "imports": [],
+        "name": "00_in_functional_image",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [],
+        "name": "01_in_anatomical_image",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "00_in_functional_image"
+        ],
+        "name": "02_motion_correct",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "01_in_anatomical_image"
+        ],
+        "name": "03_skullstrip_t1",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "02_motion_correct"
+        ],
+        "name": "04_export_mc",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "02_motion_correct"
+        ],
+        "name": "05_mean_bold",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "03_skullstrip_t1"
+        ],
+        "name": "06_intensity_norm_anat",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "05_mean_bold",
+            "03_skullstrip_t1",
+            "01_in_anatomical_image"
+        ],
+        "name": "07_epi2t1",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "07_epi2t1"
+        ],
+        "name": "08_inv_epi2t1",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "06_intensity_norm_anat",
+            "08_inv_epi2t1",
+            "05_mean_bold"
+        ],
+        "name": "09_anat_trans",
+        "size": 1
+    },
+    {
+        "group": 1,
+        "imports": [
+            "09_anat_trans"
+        ],
+        "name": "10_export_t1",
+        "size": 1
+    }
+]

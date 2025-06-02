@@ -109,79 +109,7 @@ class FieldmapsModelMetricsComputation(MetricsComputationBase):
             time_series.append(sample)
         print(f"Samples loaded")
         return time_series
-
-        # print(f"Original t1 shape: {t1w.shape}")
-        # print(f"BOLD d original shape: {b0d.shape}")
-        bold_4d = np.transpose(b0d, (1, 2, 3, 0))
-        t1_trans = np.transpose(t1w, (1, 2, 3, 0))
-        num_timepoints_orig = bold_4d.shape[3]
-        print(f"Number of timepoints found (Distorted): {num_timepoints_orig}")
-        mid_index = bold_4d.shape[3] // 2
-        bold_ref = bold_4d[..., mid_index]
-        t1_ref = t1_trans[..., mid_index]
-        print(type(bold_4d), type(t1_trans))
-        print(bold_ref.shape, t1_ref.shape)
-
-
-        # START TIME
-        undistort_start = time.time()
-        fieldmap_start = time.time()
-        pred_fieldmap = self._predict_fieldmap(bold_ref=bold_ref, t1_ref=t1_ref)
-        fieldmap_end = time.time()
-        fieldmap_elapsed = fieldmap_end - fieldmap_start
-        affine_used = b0d_affine[0]
-        out_bold_path = os.path.join(subject_path, "b0_fugue_u.nii.gz")
-        print(f"Applying fugue")
-        bold_4d_fugue = np.transpose(bold_4d, axes=(1, 2, 0, 3))
-        self._apply_fugue_undistortion(
-            bold_4d=bold_4d_fugue,
-            pred_fieldmap=pred_fieldmap,
-            affine=affine_used,
-            echo_spacing=echospacing,
-            unwarp_direction=phaseencodingdirection,
-            out_path=out_bold_path
-        )
-        undistort_end = time.time()
-        undistort_elapsed = undistort_end - undistort_start 
-
-        self.fieldmap_compute_times.append(fieldmap_elapsed)
-        self.undistortion_compute_times.append(undistort_elapsed)
-
-        unwarped_4d = nib.load(out_bold_path).get_fdata()
-        print(f"Number of timepoints after unwarp: {unwarped_4d.shape[3]}")
-
-        # Load the unwarped 4D BOLD volume
-        unwarped_4d = nib.load(out_bold_path).get_fdata()
-        print(f"Number of timepoints after unwarp: {unwarped_4d.shape[3]}")
-
-        time_series = []
-        num_timepoints=unwarped_4d.shape[3]
-        print(f"Found {num_timepoints} time points")
-
-        assert len(list(t1w)) == unwarped_4d.shape[3], \
-            f"Mismatch: {len(list(t1w))} T1 timepoints vs. {unwarped_4d.shape[3]} undistorted volumes"
-
-        time_series = []
-        for t in range(len(list(t1w))):
-            # print(f"Loading timepoint {t}")
-            img_b0d = list(b0d)[t]
-            img_b0u = list(b0u)[t]
-            img_out = unwarped_4d[..., t]
-            img_mask = list(b0_mask)[t]
-
-            sample = {
-                "b0d": np.transpose(img_b0d, axes=(1, 2, 0)),
-                "b0u": np.transpose(img_b0u.squeeze(0), axes=(1, 2, 0)),
-                "out": img_out,
-                "mask": np.transpose(img_mask.squeeze(0), axes=(1, 2, 0))
-            }
-
-            time_series.append(sample)
-            # print(f"Loaded timepoint {t}...\n")
-        
-        print(f"Finished loading time points")
-        return time_series
-
+    
     def get_undistorted_b0(self, sample):
         return sample["out"], None
     
@@ -193,6 +121,80 @@ class FieldmapsModelMetricsComputation(MetricsComputationBase):
             else:
                 f.write("No undistortion time recorded...")
         print(f"Compute times saved to {save_path}")
+
+        # # print(f"Original t1 shape: {t1w.shape}")
+        # # print(f"BOLD d original shape: {b0d.shape}")
+        # bold_4d = np.transpose(b0d, (1, 2, 3, 0))
+        # t1_trans = np.transpose(t1w, (1, 2, 3, 0))
+        # num_timepoints_orig = bold_4d.shape[3]
+        # print(f"Number of timepoints found (Distorted): {num_timepoints_orig}")
+        # mid_index = bold_4d.shape[3] // 2
+        # bold_ref = bold_4d[..., mid_index]
+        # t1_ref = t1_trans[..., mid_index]
+        # print(type(bold_4d), type(t1_trans))
+        # print(bold_ref.shape, t1_ref.shape)
+
+
+        # # START TIME
+        # undistort_start = time.time()
+        # fieldmap_start = time.time()
+        # pred_fieldmap = self._predict_fieldmap(bold_ref=bold_ref, t1_ref=t1_ref)
+        # fieldmap_end = time.time()
+        # fieldmap_elapsed = fieldmap_end - fieldmap_start
+        # affine_used = b0d_affine[0]
+        # out_bold_path = os.path.join(subject_path, "b0_fugue_u.nii.gz")
+        # print(f"Applying fugue")
+        # bold_4d_fugue = np.transpose(bold_4d, axes=(1, 2, 0, 3))
+        # self._apply_fugue_undistortion(
+        #     bold_4d=bold_4d_fugue,
+        #     pred_fieldmap=pred_fieldmap,
+        #     affine=affine_used,
+        #     echo_spacing=echospacing,
+        #     unwarp_direction=phaseencodingdirection,
+        #     out_path=out_bold_path
+        # )
+        # undistort_end = time.time()
+        # undistort_elapsed = undistort_end - undistort_start 
+
+        # self.fieldmap_compute_times.append(fieldmap_elapsed)
+        # self.undistortion_compute_times.append(undistort_elapsed)
+
+        # unwarped_4d = nib.load(out_bold_path).get_fdata()
+        # print(f"Number of timepoints after unwarp: {unwarped_4d.shape[3]}")
+
+        # # Load the unwarped 4D BOLD volume
+        # unwarped_4d = nib.load(out_bold_path).get_fdata()
+        # print(f"Number of timepoints after unwarp: {unwarped_4d.shape[3]}")
+
+        # time_series = []
+        # num_timepoints=unwarped_4d.shape[3]
+        # print(f"Found {num_timepoints} time points")
+
+        # assert len(list(t1w)) == unwarped_4d.shape[3], \
+        #     f"Mismatch: {len(list(t1w))} T1 timepoints vs. {unwarped_4d.shape[3]} undistorted volumes"
+
+        # time_series = []
+        # for t in range(len(list(t1w))):
+        #     # print(f"Loading timepoint {t}")
+        #     img_b0d = list(b0d)[t]
+        #     img_b0u = list(b0u)[t]
+        #     img_out = unwarped_4d[..., t]
+        #     img_mask = list(b0_mask)[t]
+
+        #     sample = {
+        #         "b0d": np.transpose(img_b0d, axes=(1, 2, 0)),
+        #         "b0u": np.transpose(img_b0u.squeeze(0), axes=(1, 2, 0)),
+        #         "out": img_out,
+        #         "mask": np.transpose(img_mask.squeeze(0), axes=(1, 2, 0))
+        #     }
+
+        #     time_series.append(sample)
+        #     # print(f"Loaded timepoint {t}...\n")
+        
+        # print(f"Finished loading time points")
+        # return time_series
+
+
 
     
     # def save_compute_times(self, save_path):

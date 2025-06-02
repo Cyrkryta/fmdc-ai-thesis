@@ -61,8 +61,7 @@ def warp_to_mni(input_volume, affine_input_volume, subject_path):
         out_volume = Node(nio.ExportFile(out_file=abspath(os.path.join(directory, "output.nii.gz")), clobber=True), name="out_volume")
 
         ref = "/home/mlc/fsl/data/standard/MNI152_T1_2mm_brain.nii.gz"
-        # ref = "/Users/jan/Applications/fsl/data/standard/MNI152_T1_2mm_brain.nii.gz"
-
+        
         apply_warp = Node(fsl.preprocess.ApplyWarp(ref_file=ref), name="apply_warp")
 
         workflow = Workflow(name="warp_to_mni")

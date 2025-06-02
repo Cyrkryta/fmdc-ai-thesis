@@ -37,16 +37,6 @@ if __name__ == "__main__":
     )
     data_module.prepare_data()
 
-    # train_dataloader = data_module.train_dataloader()
-    # sample_batch = next(iter(train_dataloader))
-    # for key, val in sample_batch.items():
-    #     if isinstance(val, list):
-    #         print(f"{key}: list length={len(val)}, type={type(val)}")
-    #     elif hasattr(val, "shape"):
-    #         print(f"{key}: value shape={val.shape}, type={type(val)}")
-    #     else:
-    #         print(f"{key}: type={type(val)}")
-
 
     # # If we get past prepare data, then create the model
     model = UNet3DFieldmap()

@@ -94,7 +94,3 @@ class FMRIDataModule(pl.LightningDataModule):
         dataset = LazyFMRIDataset(self.val_dataset, device=self.device, mode="train")
         sampler = FMRICustomSampler(dataset, batch_size=self.batch_size, key_fn=get_project_key)
         return DataLoader(dataset, batch_sampler=sampler, num_workers=1, persistent_workers=True)
-    
-    # def test_dataloader(self):
-    #     from project.data.custom_fmri_sampler import FMRICustomSampler, get_project_key
-    #     dataset = LazyFMRIDataset(self.test_dataset, device=self.device, mode="test")

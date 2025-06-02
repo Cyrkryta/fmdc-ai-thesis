@@ -1,0 +1,41 @@
+
+
+METRICS REPORT
+
+correlation_distorted_mean: [0.8903233558744822]
+Mean correlation_distorted_mean: 0.8903233558744822
+Median: correlation_distorted_mean: 0.8903233558744822
+correlation_out_mean: [0.2776193664738786]
+Mean correlation_out_mean: 0.2776193664738786
+Median: correlation_out_mean: 0.2776193664738786
+correlation_distorted_median: [0.9858317048056995]
+Mean correlation_distorted_median: 0.9858317048056995
+Median: correlation_distorted_median: 0.9858317048056995
+correlation_out_median: [0.27374589148100836]
+Mean correlation_out_median: 0.27374589148100836
+Median: correlation_out_median: 0.27374589148100836
+mse_distorted_mean: [0.004846160714982962]
+Mean mse_distorted_mean: 0.004846160714982962
+Median: mse_distorted_mean: 0.004846160714982962
+mse_out_mean: [0.07748666478123487]
+Mean mse_out_mean: 0.07748666478123487
+Median: mse_out_mean: 0.07748666478123487
+mse_distorted_median: [0.004856435968074259]
+Mean mse_distorted_median: 0.004856435968074259
+Median: mse_distorted_median: 0.004856435968074259
+mse_out_median: [0.07740092991043812]
+Mean mse_out_median: 0.07740092991043812
+Median: mse_out_median: 0.07740092991043812
+ssim_distorted_mean: [0.9637240232082839]
+Mean ssim_distorted_mean: 0.9637240232082839
+Median: ssim_distorted_mean: 0.9637240232082839
+ssim_out_mean: [0.7052808578138429]
+Mean ssim_out_mean: 0.7052808578138429
+Median: ssim_out_mean: 0.7052808578138429
+ssim_distorted_median: [0.9636855674623951]
+Mean ssim_distorted_median: 0.9636855674623951
+Median: ssim_distorted_median: 0.9636855674623951
+ssim_out_median: [0.7055131287838883]
+Mean ssim_out_median: 0.7055131287838883
+Median: ssim_out_median: 0.7055131287838883
+Mean compute time per sample in seconds: 2.2545838967347757e-06

@@ -41,27 +41,17 @@ def load_only_nii(path_nii):
 def get_nii_img(path_nii):
     nii = nib.load(path_nii)
     nii_img = nii.get_fdata()
-
     return nii_img
 
 
 def nii2torch(nii_img):
-    # Input:  (x, y, z, channels)
-    # Output: (1, channels, z, x ,y)
-
-    # Expand dims => (1, x, y, z, channels)
-    # torch_img = np.expand_dims(nii_img, axis=0)
-
-    # Permute dimensions => (1, channels, z, x ,y)
     torch_img = np.transpose(nii_img, axes=(3, 2, 0, 1))
-
     return torch_img
 
 
 def niiu2torch(nii_img):
     torch_img = np.expand_dims(nii_img, axis=0)
     torch_img = np.transpose(torch_img, axes=(4, 0, 3, 1, 2))
-
     return torch_img
 
 
@@ -72,15 +62,8 @@ def niimask2torch(nii_img, repetitions):
 
 
 def torch2nii(torch_img):
-    # Input:  (1, channels, z, x ,y)
-    # Output: (x, y, z, channels)
-
-    # Remove first dim => (channels, z, x ,y)
     nii_img = torch_img[0, :, :, :, :]
-
-    # Permute dimensions => (x, y, z, channels)
     nii_img = np.transpose(nii_img, axes=(2, 3, 1, 0))
-
     return nii_img
 
 

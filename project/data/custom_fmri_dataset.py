@@ -43,18 +43,6 @@ class FMRIDataset(Dataset):
             self.echo_spacing = []
             self.unwarp_direction = []
             self.project_keys = []
-        # else:
-        #     self.img_b0_d = []
-        #     self.img_b0_u = []
-        #     self.img_mask = []
-        #     self.img_fieldmap = []
-        #     self.b0u_affine = []
-        #     self.b0d_affine = []
-        #     self.fieldmap_affine = []
-        #     self.echo_spacing = []
-        #     self.img_b0_d_alltf = []
-        #     self.img_b0_u_alltf = []
-        #     self.project_keys = []
 
         # Go through each subject in the paths
         for SUBJECT_PATH in SUBJECT_PATHS:
@@ -72,44 +60,6 @@ class FMRIDataset(Dataset):
                     self.echo_spacing.extend(list(echo_spacing))
                     self.unwarp_direction.extend(list(unwarp_direction))
                     self.project_keys.extend([project] * num_samples)
-            # else:
-            #     tuple = fmri_data_util.load_data_from_path(SUBJECT_PATH)
-            # img_t1, img_b0_d, img_b0_u, img_mask, img_fieldmap, b0u_affine, b0d_affine, fieldmap_affine, echo_spacing, img_b0alltf_d, img_b0alltf_u = fmri_data_util.load_data_from_path(SUBJECT_PATH)
-
-            # # Split images on temporal access into corresponding independent samples
-            # if split_temporally:
-            #     self.img_t1.extend(list(img_t1))
-            #     self.img_b0_d.extend(list(img_b0_d))
-            #     self.img_b0_u.extend(list(img_b0_u))
-            #     self.img_mask.extend(list(img_mask))
-            #     self.img_fieldmap.extend(list(img_fieldmap))
-            #     self.b0u_affine.extend(list(b0u_affine))
-            #     self.b0d_affine.extend(list(b0d_affine))
-            #     self.fieldmap_affine.extend(list(fieldmap_affine))
-            #     self.echo_spacing.extend(list(echo_spacing))
-            #     self.project_keys.extend([project])
-            #     # Append extra test files only if they exist
-            #     if img_b0alltf_d is not None and img_b0alltf_u is not None:
-            #         self.img_b0_d_alltf.extend(list(img_b0alltf_d))
-            #         self.img_b0_u_alltf.extend(list(img_b0alltf_u))
-            #     else:
-            #         pass
-
-            # Just append the data if splitting is disabled
-            # else:
-            #     self.img_t1.append(img_t1)
-            #     self.img_b0_d.append(img_b0_d)
-            #     self.img_b0_u.append(img_b0_u)
-            #     self.img_mask.append(img_mask)
-            #     self.img_fieldmap.append(img_fieldmap)
-            #     self.b0u_affine.extend(b0u_affine)
-            #     self.b0d_affine.extend(b0d_affine)
-            #     self.fieldmap_affine.extend(fieldmap_affine)
-            #     self.echo_spacing.append(echo_spacing)
-            #     self.project_keys.append(project)
-            #     if img_b0alltf_d is not None and img_b0alltf_u is not None:
-            #         self.img_b0_d_alltf.append(img_b0alltf_d)
-            #         self.img_b0_u_alltf.append(img_b0alltf_u)
 
     # Return the length of the images
     def __len__(self):
@@ -124,11 +74,6 @@ class FMRIDataset(Dataset):
             # 'mask': self.img_mask[idx],
             'fieldmap': self.img_fieldmap[idx]
         }
-
-        # Optionally include extra test files in the data dictionary
-        # if self.img_b0_d_alltf and self.img_b0_u_alltf:
-        #     data['b0alltf_d'] = self.img_b0_d_alltf[idx]
-        #     data['b0alltf_u'] = self.img_b0_u_alltf[idx]
         
         # Perform augmentation when getting item, if retrieved
         if self.augment:
@@ -146,38 +91,7 @@ class FMRIDataset(Dataset):
             "echo_spacing": torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device),
             "unwarp_direction": self.unwarp_direction
         }
-            # img_data,
-            # torch.from_numpy(transformed_data["fieldmap"]).float().to(self.device),
-            # torch.from_numpy(self.fieldmap_affine[idx]).float().to(self.device),
-            # torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device)
-        
-        # # Create the output
-        # if 'b0alltf_d' in transformed_data and 'b0alltf_u' in transformed_data:
-        #     output = (
-        #         img_data,
-        #         torch.from_numpy(transformed_data['b0_u']).float().to(self.device),
-        #         torch.from_numpy(transformed_data['mask']).bool().to(self.device),
-        #         torch.from_numpy(transformed_data['fieldmap']).float().to(self.device),
-        #         torch.from_numpy(self.b0u_affine[idx]).float().to(self.device),
-        #         torch.from_numpy(self.b0d_affine[idx]).float().to(self.device),
-        #         torch.from_numpy(self.fieldmap_affine[idx]).float().to(self.device),
-        #         torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device),
-        #         torch.from_numpy(transformed_data['b0alltf_d']).float().to(self.device),
-        #         torch.from_numpy(transformed_data['b0alltf_u']).float().to(self.device)
-        #     )      
-        # else:
-        #     output = (
-        #         img_data,
-        #         torch.from_numpy(transformed_data['b0_u']).float().to(self.device),
-        #         torch.from_numpy(transformed_data['mask']).bool().to(self.device),
-        #         torch.from_numpy(transformed_data['fieldmap']).float().to(self.device),
-        #         torch.from_numpy(self.b0u_affine[idx]).float().to(self.device),
-        #         torch.from_numpy(self.b0d_affine[idx]).float().to(self.device),
-        #         torch.from_numpy(self.fieldmap_affine[idx]).float().to(self.device),
-        #         torch.from_numpy(np.asarray(self.echo_spacing[idx])).float().to(self.device),
-        #         None,
-        #         None
-        #     )
+
 
         # Return the single output
         return output
