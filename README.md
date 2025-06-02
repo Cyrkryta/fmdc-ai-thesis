@@ -32,9 +32,9 @@ The model is trained on publically available data retrieved from OpenNeuro
 
 ## Docker
 
-The best performing model is packed in a Docker image which can be pulled from https://hub.docker.com/r/maglindchr/fmapsynth
+The best performing model is packed in a Docker image which can be pulled from https://hub.docker.com/r/maglindchr/fmapsynth by runnining by running `docker pull maglindchr/fmapsynth:v1.0`. 
 
-The model itself, and two example images can be retrieved [here](https://drive.google.com/drive/folders/1V2RDDLP2VzG8n5O6mMlezzlZXzB1QnT5?usp=drive_link) by running `docker pull maglindchr/fmapsynth:v1.0`. 
+The model itself, and two example images can be retrieved [here](https://drive.google.com/drive/folders/1V2RDDLP2VzG8n5O6mMlezzlZXzB1QnT5?usp=drive_link)
 
 The model's performance on the example images has not been examined. 
 
