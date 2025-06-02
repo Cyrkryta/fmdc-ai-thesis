@@ -1,27 +1,54 @@
-FROM --platform=linux/amd64 nvidia/cuda:12.4.1-base-ubuntu22.04
+# Set base image
+FROM python:3.10
 
-RUN mkdir /extra
-COPY extra /extra/
+# Get installations, python, etc. 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    wget \
+    ca-certificates \
+    git \
+    python3-pip \
+    python3-dev \
+    tcsh \
+    perl \
+    gcc \
+    dc \
+    bc \
+    libgomp1 \
+    libjpeg62-turbo \
+    libpng16-16 \
+    libtiff-dev \
+    libfftw3-dev \
+    libeigen3-dev \
+    libgsl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update
-RUN apt-get install -y python3 python3-pip python3-dev build-essential tcsh perl gzip gcc dc bc libgomp1
+# Install FSL
+RUN wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py -O /tmp/fslinstaller.py && \
+    python3 /tmp/fslinstaller.py -d /usr/local/fsl && \
+    rm /tmp/fslinstaller.py
 
-RUN pip install --upgrade pip
-COPY requirements.txt ./requirements.txt
-RUN pip install -r ./requirements.txt
-RUN rm ./requirements.txt
+# Set the environment variables
+ENV FSLDIR=/usr/local/fsl
+ENV PATH="${FSLDIR}/bin:${PATH}"
+ENV FSLOUTPUTTYPE=NIFTI_GZ
 
-RUN mkdir /INPUTS
-RUN mkdir /OUTPUTS
+# Make working directory and environment path
+RUN mkdir -p /app
+WORKDIR /app
+ENV PYTHONPATH=/app
 
-RUN mkdir /project
-COPY project /project/
+# Copy and install requirements file
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN mkdir /scripts
-COPY scripts /scripts/
+# Copy code
+COPY src/ ./src/
+COPY scripts/ ./scripts/
 
-# Only use CPU for now
-ENV CUDA_VISIBLE_DEVICES=""
+# Make the pipeline scripts executable
+RUN chmod +x ./scripts/pipeline.py
 
-# TODO: Need to decide whether to run inference or training at some point
-ENTRYPOINT ["/scripts/pipeline.sh"]
+# Entrypoint
+ENTRYPOINT ["./scripts/pipeline.py"]
