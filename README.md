@@ -60,4 +60,4 @@ maglindchr/fmapsynth:v1.0
 
 
 ## Acknowledgements
-A big thank you to Melanie Ganz-Benjaminsen from the University of Copenhagen, as well as Patrick Fisher and Cyril Pernet from NRU, for being great supervisors throughout the project. Also, a big thank you to Jan Tagscherer who is the initial Master student wokring on the project, affiliated with NRU.
+A big thank you to Melanie Ganz-Benjaminsen from the University of Copenhagen, as well as Patrick Fisher and Cyril Pernet from NRU, for being great supervisors throughout the project.
