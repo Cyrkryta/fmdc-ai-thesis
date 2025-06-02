@@ -1,55 +1,63 @@
-<div align="center">    
 
-# Field Map Distortion Correction Master's Thesis for IT & Cognition
+# FmapSynth: Deep Learning-Based Fieldmap Synthesis for fMRI Distortion Correction
 
-</div>
+This project provides a deep learning model designed to estimate underlying fieldmaps for subsequent distortion correction of susceptibility artifacts in fMRI, specifically for unwarping distorted BOLD images using a tool like FSL FUGUE.
 
-## TL;DR
-Estimate and evaluate undistorted fMRI scans from a distorted scan and T1-weighted scan.
+The model takes as input:
+* A distorted BOLD image in native space
+* A resampled T1-weighted structural image
 
-#### Description
-The project aims to use a ```U-NET``` deep learning model for ```estimateing fieldmaps``` used for ```fMRI distortion correction```. It is a part of the ```final thesis``` for the IT & Cognition Master's program at the ```University of Copenhagen```, and is carried out in collaboration with the ```Neurobiology Research Unit (NRU)``` located at Rigshospitalet, Copenhagen. The thesis builds upon the work done by ```Jan Tagscherer```, a previous master's student affiliated with the ```NRU```.
+And outputs:
+* Estimated fieldmap that can be used for subsequent unwarping.
 
-## Data Acquisition and Processing
-#### Data Acquisition
-Identify datasets with data that should be used for testing and training. The respective dataset paths should be structured in ```trainval_file_paths.json``` and ```test_file_paths.json``` as follows, inserting the respective paths and subject holders.
+## Data
+The model is trained on publically available data retrieved from OpenNeuro
+[OpenNeuro](https://openneuro.org/)
 
-    "ds004182": {
-        "anat": "{subject_path}/anat/{subject}_rec-NORM_T1w.nii.gz",
-        "fmap": {
-            "magnitude": "{subject_path}/fmap/{subject}_magnitude1.nii.gz",
-            "phasediff": "{subject_path}/fmap/{subject}_phasediff.nii.gz"
-        },
-        "func": "{subject_path}/func/{subject}_task-rest_run-1_bold.nii.gz",
-        "echospacing": 0.000265001
-    }
-    
-Once the files are created, used `datalad` to retrieve the `dataset` and `files`, and remove these again. First, retrieve datasets by running `datalad install https://github.com/OpenNeuroDatasets/{dataset}.git` manually. 
+| Case           | Dataset  | Version | Total Sub. | Sampled | Sessions | Seq. Len. | Vendor / Strength | Healthy | State | BOLD Dir. | Fmap. Dir. |
+|----------------|----------|---------|------------|---------|----------|-----------|-------------------|---------|-------|-----------|------------|
+| **Train & Val**| ds005038 | 1.0.3   | 58         | 50      | 2        | N/A       | S / 3             | Y       | R     | j-        | j-         |
+| Total: 190     | ds002422 | 1.1.0   | 46         | 40      | 1        | N/A       | S / 1.5           | Y       | R     | j-        | -          |
+| subjects       | ds003745 | 2.1.1   | 50         | 50      | 1        | N/A       | S / 3             | Y       | T     | j-        | j-         |
+|                | ds004044 | 2.0.3   | 62         | 50      | 1        | N/A       | S / 3             | Y       | T     | j-        | i          |
+| **Test**       | ds003835 | 1.0.2   | 24         | 10      | 1        | 360       | S / 3             | Y       | R/T   | j-        | j-         |
+| Total: 90      | ds005165 | 1.0.4   | 10         | 10      | 5        | 212       | S / 3             | Y       | R     | j-        | j-         |
+| Subjects       | ds000224 | 1.0.4   | 10         | 10      | 13       | 818       | S / 3             | Y       | R     | j-        | j-         |
+|                | ds001454 | 1.3.1   | 24         | 10      | 2        | 195       | S / 3             | Y       | R     | j-        | j-         |
+|                | ds004182 | 1.0.1   | 50         | 10      | 1        | 300       | S / 3             | Y       | R     | j         | j          |
+|                | ds005263 | 1.0.0   | 68         | 10      | 1        | 488       | S / 3             | Y       | T     | j         | j-         |
+|                | ds002898 | 1.4.2   | 27         | 10      | 1        | 242       | S / 3             | Y       | R     | i         | i          |
+|                | ds004073 | 1.0.1   | 51         | 20      | 1        | 545       | P / 3             | Y       | T     | j         | j          |
 
-Retrieve the necessary files and move them to a seperate non-git folder by running the following commands for test and train (OBS! This assumes need for subsampling subjects, hence --n_subjects).
 
-Training command:
+## Docker
+
+The best performing model is packed in a Docker image which can be pulled from https://hub.docker.com/r/maglindchr/fmapsynth
+
+The model itself, and two example images can be retrieved [here](https://drive.google.com/drive/folders/1V2RDDLP2VzG8n5O6mMlezzlZXzB1QnT5?usp=drive_link) by running `docker pull maglindchr/fmapsynth:v1.0`. 
+
+The model's performance on the example images has not been examined. 
+
+The image performs a simple set of preprocessing steps (motion correction, coregistration, etc.), and have already the necessary tools installed.
+
+Before running the container, prepare your data as follows:
+* Create an input folder containing the distorted BOLD image as `BOLD.nii.gz` and the high resolution T1w images as `T1w.nii.gz`.
+* Create an empty output folder to hold the estimated fieldmap `fieldmap.nii.gz` 
+
+Mount and run the docker container by running the following
+
+```bash
+docker run --rm \
+-v "path/to/input/folder":/data/input:ro \
+-v "path/to/output/folder":/data/output \
+maglindchr/fmapsynth:v1.0
 ```
-python move_datalad_files.py --SOURCE_DIR_PATH /path/to/trainval_data_source --DEST_DIR_PATH /path/to/trainval_destination --CONFIG_PATH /path/to/trainval_file_paths.json --n_subjects {number of subjects to subsample} 
-```
 
-Test command:
-```
-python move_datalad_files.py --SOURCE_DIR_PATH /path/to/test_data_source --DEST_DIR_PATH /path/to/test_destination --CONFIG_PATH /path/to/test_file_paths.json --n_subjects {number of subjects to subsample} 
-```
 
-#### Data Preprocessing
-To convert data to a suitable format for the model, the `prepare_data.py` file should be run. Once again, for overview reasons, create json files only following the format in the previous. 
+## Authors
 
-Make sure to have `FSL` installed, and run the command
+- [@Cyrkryta (Magnus Lindberg Christensen)](https://github.com/Cyrkryta/)
 
-```
-python prepare_data.py --FSL_DIR /path/to/fsl/root --SOURCE_DATASET_ROOT_DIR /path/to/retrieved/data/files/directory --DEST_DATASET_ROOT_DIR /path/to/processed/output/directory --JSON_PROCESSING_CONFIG_PATH /path/to/new/json/config/file
-```
 
-#### Training
-Before training, it is important that you have the preprocessed data for it to work as intended. There are two ways of constructing the trian, validation and test data. `1.` Only add a training dataset. It will then be split 70/10/20. `2.` Add a training dataset and testing dataset, which will use the test dataset for testing and split the training data for train and validation (80/20). Run the following command to train a model
-
-```
-python project/training.py --TRAINING_DATASET_PATH "/path/to/processed/training/data/ds*" -- TEST_DATASET_PATH "/path/to/processed/test/data/ds*" --CHECKPOINT_PATH /path/to/checkpoint/folder --max-epochs 100000 --batch_size 32
-```
+## Acknowledgements
+A big thank you to Melanie Ganz-Benjaminsen from the University of Copenhagen, as well as Patrick Fisher and Cyril Pernet from NRU, for being great supervisors throughout the project. Also, a big thank you to Jan Tagscherer who is the initial Master student wokring on the project, affiliated with NRU.
